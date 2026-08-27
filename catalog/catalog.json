@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 1,
+  "connectors": [
+    {
+      "id": "qcc-company",
+      "name": "企查查·企业工商",
+      "vendor": "企查查 Qichacha",
+      "icon": "/mcp-connector/ui/assets/qcc-logo.svg",
+      "category": "企业数据",
+      "summary": "一站式企业工商 / 股权 / 经营信息查询",
+      "description": "覆盖工商注册、股东、实际控制人、对外投资、经营异常、行政处罚等企业全景数据，适用于尽调、风控、营销获客场景。",
+      "tags": ["工商", "风控", "尽调", "获客"],
+      "published": true,
+      "featured": true,
+      "homepage": "https://open.qcc.com",
+      "promptVariables": [
+        { "name": "company", "label": "企业名称", "default": "小米科技有限责任公司", "placeholder": "例如：小米科技有限责任公司", "required": true },
+        { "name": "person", "label": "人员姓名", "default": "雷军", "placeholder": "例如：雷军", "required": true }
+      ],
+      "auth": {
+        "mode": "oauth2-pkce",
+        "issuer": "https://agent.qcc.com",
+        "scope": "mcp:tools",
+        "clientName": "DeepSeek Harness - MCP 连接器",
+        "tokenEndpointAuthMethod": "none",
+        "grantSharing": "issuer"
+      },
+      "servers": [
+        { "serverKey": "company", "url": "https://agent.qcc.com/mcp/company/stream", "serverName": "qcc-company", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "risk", "url": "https://agent.qcc.com/mcp/risk/stream", "serverName": "qcc-risk", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "ipr", "url": "https://agent.qcc.com/mcp/ipr/stream", "serverName": "qcc-ipr", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "operation", "url": "https://agent.qcc.com/mcp/operation/stream", "serverName": "qcc-operation", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "history", "url": "https://agent.qcc.com/mcp/history/stream", "serverName": "qcc-history", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "executive", "url": "https://agent.qcc.com/mcp/executive/stream", "serverName": "qcc-executive", "transport": "streamable-http", "headers": {} }
+      ],
+      "prompts": [
+        { "title": "企业最新工商变更", "text": "查询 {{company}} 的最新工商变更记录", "server": "company" },
+        { "title": "股东结构", "text": "查询 {{company}} 的股东构成与出资信息", "server": "company" },
+        { "title": "实际控制人", "text": "查询 {{company}} 的实际控制人信息", "server": "company" },
+        { "title": "主要人员（高管团队）", "text": "查询 {{company}} 的主要人员信息", "server": "company" },
+        { "title": "对外投资", "text": "查询 {{company}} 的对外投资信息", "server": "company" },
+        { "title": "受益所有人识别", "text": "查询 {{company}} 的受益所有人识别信息", "server": "company" },
+        { "title": "企业风险全景扫描", "text": "对 {{company}} 做一次企业风险全景扫描", "server": "risk" },
+        { "title": "失信信息", "text": "查询 {{company}} 的失信信息", "server": "risk" },
+        { "title": "被执行人信息", "text": "查询 {{company}} 的被执行人信息", "server": "risk" },
+        { "title": "经营异常", "text": "查询 {{company}} 的经营异常信息", "server": "risk" },
+        { "title": "商标信息", "text": "查询 {{company}} 的商标信息", "server": "ipr" },
+        { "title": "专利信息", "text": "查询 {{company}} 的专利信息", "server": "ipr" },
+        { "title": "软件著作权", "text": "查询 {{company}} 的软件著作权信息", "server": "ipr" },
+        { "title": "作品著作权", "text": "查询 {{company}} 的作品著作权信息", "server": "ipr" },
+        { "title": "招投标信息", "text": "查询 {{company}} 的招投标信息", "server": "operation" },
+        { "title": "资质证书", "text": "查询 {{company}} 的资质证书信息", "server": "operation" },
+        { "title": "行政许可", "text": "查询 {{company}} 的行政许可信息", "server": "operation" },
+        { "title": "新闻舆情", "text": "查询 {{company}} 的新闻舆情信息", "server": "operation" },
+        { "title": "历史股东", "text": "查询 {{company}} 的历史股东变动记录", "server": "history" },
+        { "title": "历史法定代表人", "text": "查询 {{company}} 的历史法定代表人记录", "server": "history" },
+        { "title": "历史失信", "text": "查询 {{company}} 的历史失信记录（已移出名单）", "server": "history" },
+        { "title": "历史行政处罚", "text": "查询 {{company}} 的历史行政处罚记录", "server": "history" },
+        { "title": "董监高个人风险扫描", "text": "对 {{company}} 的董监高 {{person}} 做一次个人风险全景扫描", "server": "executive" },
+        { "title": "担任法定代表人", "text": "查询 {{company}} 的董监高 {{person}} 担任法定代表人的情况", "server": "executive" },
+        { "title": "在外任职", "text": "查询 {{company}} 的董监高 {{person}} 的在外任职信息", "server": "executive" },
+        { "title": "全部关联企业", "text": "查询 {{company}} 的董监高 {{person}} 的全部关联企业", "server": "executive" }
+      ]
+    },
+    {
+      "id": "qcc-legal",
+      "name": "企查查·法律数据",
+      "vendor": "企查查 Qichacha",
+      "icon": "/mcp-connector/ui/assets/qcc-logo.svg",
+      "category": "法律合规",
+      "summary": "法规条文 / 司法案例检索与核验",
+      "description": "法律法规逐字条文、指导性/公报/典型案例检索、案号引用核验，面向法律意见书与类案检索场景。",
+      "tags": ["法律", "法规", "案例", "核验"],
+      "published": true,
+      "featured": true,
+      "homepage": "https://open.qcc.com",
+      "promptVariables": [
+        { "name": "topic", "label": "法律主题", "default": "劳动合同解除", "placeholder": "例如：劳动合同解除", "required": true }
+      ],
+      "auth": {
+        "mode": "oauth2-pkce",
+        "issuer": "https://agent.qcc.com",
+        "scope": "mcp:tools",
+        "clientName": "DeepSeek Harness - MCP 连接器",
+        "tokenEndpointAuthMethod": "none",
+        "grantSharing": "issuer"
+      },
+      "servers": [
+        { "serverKey": "regulation", "url": "https://agent.qcc.com/mcp/regulation/stream", "serverName": "qcc-regulation", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "case", "url": "https://agent.qcc.com/mcp/case/stream", "serverName": "qcc-case", "transport": "streamable-http", "headers": {} }
+      ],
+      "prompts": [
+        { "title": "法规检索", "text": "检索与「{{topic}}」相关的法律法规", "server": "regulation" },
+        { "title": "法条检索", "text": "检索与「{{topic}}」相关的法条原文", "server": "regulation" },
+        { "title": "司法案例检索", "text": "检索与「{{topic}}」相关的司法案例", "server": "case" },
+        { "title": "权威案例检索", "text": "检索与「{{topic}}」相关的权威司法案例", "server": "case" }
+      ]
+    },
+    {
+      "id": "qcc-tender",
+      "name": "企查查·招投标",
+      "vendor": "企查查 Qichacha",
+      "icon": "/mcp-connector/ui/assets/qcc-logo.svg",
+      "category": "企业数据",
+      "summary": "招投标公告 / 中标结果 / 采购信息",
+      "description": "覆盖全国招投标公告、中标结果、采购信息，适用于竞对分析、市场研究、销售线索挖掘场景。",
+      "tags": ["招投标", "采购", "中标", "竞对"],
+      "published": true,
+      "featured": true,
+      "homepage": "https://open.qcc.com",
+      "promptVariables": [
+        { "name": "keyword", "label": "项目关键词", "default": "智慧城市", "placeholder": "例如：智慧城市", "required": true },
+        { "name": "company", "label": "企业名称", "default": "华为技术有限公司", "placeholder": "例如：华为技术有限公司", "required": true }
+      ],
+      "auth": {
+        "mode": "oauth2-pkce",
+        "issuer": "https://agent.qcc.com",
+        "scope": "mcp:tools",
+        "clientName": "DeepSeek Harness - MCP 连接器",
+        "tokenEndpointAuthMethod": "none",
+        "grantSharing": "issuer"
+      },
+      "servers": [
+        { "serverKey": "tender", "url": "https://agent.qcc.com/mcp/tender/stream", "serverName": "qcc-tender", "transport": "streamable-http", "headers": {} }
+      ],
+      "prompts": [
+        { "title": "招投标检索", "text": "检索与「{{keyword}}」相关的招投标、采购和中标标讯", "server": "tender" },
+        { "title": "拟建项目检索", "text": "检索与「{{keyword}}」相关的拟建项目", "server": "tender" },
+        { "title": "企业招投标检索", "text": "查询 {{company}} 相关的招标、投标、中标和采购标讯", "server": "tender" }
+      ]
+    },
+    {
+      "id": "qcc-document",
+      "name": "企查查·文档报告",
+      "vendor": "企查查 Qichacha",
+      "icon": "/mcp-connector/ui/assets/qcc-logo.svg",
+      "category": "效率工具",
+      "summary": "企业报告生成 / 文档分析",
+      "description": "基于企业数据自动生成分析报告、尽职调查文档，支持文档结构化解析与内容提取。",
+      "tags": ["文档", "报告", "分析"],
+      "published": true,
+      "featured": true,
+      "homepage": "https://open.qcc.com",
+      "promptVariables": [
+        { "name": "company", "label": "企业名称", "default": "小米科技有限责任公司", "placeholder": "例如：小米科技有限责任公司", "required": true }
+      ],
+      "auth": {
+        "mode": "oauth2-pkce",
+        "issuer": "https://agent.qcc.com",
+        "scope": "mcp:tools",
+        "clientName": "DeepSeek Harness - MCP 连接器",
+        "tokenEndpointAuthMethod": "none",
+        "grantSharing": "issuer"
+      },
+      "servers": [
+        { "serverKey": "document", "url": "https://agent.qcc.com/mcp/document/stream", "serverName": "qcc-document", "transport": "streamable-http", "headers": {} }
+      ],
+      "prompts": [
+        { "title": "企业尽调报告", "text": "为 {{company}} 生成一份企业尽职调查报告", "server": "document" },
+        { "title": "企业风险报告", "text": "为 {{company}} 生成一份企业风险分析报告", "server": "document" },
+        { "title": "工商信息摘要", "text": "整理 {{company}} 的工商与股权信息摘要", "server": "document" }
+      ]
+    },
+    {
+      "id": "pkulaw-legal",
+      "name": "北大法宝·法律检索",
+      "vendor": "北大法宝 PKULaw",
+      "icon": "/mcp-connector/ui/assets/pkulaw-logo.png",
+      "category": "法律合规",
+      "summary": "法规 / 法条 / 司法案例检索与引用核验",
+      "description": "接入北大法宝法律法规、司法案例、法条识别与引用核验能力。需使用北大法宝 Access Token，相关服务可能需要单独开通或购买。",
+      "tags": ["法律", "法规", "案例", "法条", "第三方收录"],
+      "published": true,
+      "featured": true,
+      "homepage": "https://mcp.pkulaw.com/",
+      "promptVariables": [
+        { "name": "topic", "label": "法律主题", "default": "劳动合同解除", "placeholder": "例如：劳动合同解除", "required": true },
+        { "name": "caseTopic", "label": "案例主题", "default": "竞业限制违约", "placeholder": "例如：竞业限制违约", "required": true },
+        { "name": "citation", "label": "法律引用", "default": "《民法典》第五百七十七条", "placeholder": "例如：《民法典》第五百七十七条", "required": true }
+      ],
+      "auth": {
+        "mode": "bearer",
+        "credentialName": "北大法宝 Access Token",
+        "credentialPlaceholder": "请输入您的北大法宝 Access Token",
+        "credentialDescription": "用于访问北大法宝 MCP；仅保存在 DSH 本机。",
+        "credentialHelpLabel": "如何获取北大法宝 Token？"
+      },
+      "servers": [
+        { "serverKey": "law-search", "url": "https://apim-gateway.pkulaw.com/mcp-law-search-service", "serverName": "pkulaw-law-search", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "law-keyword", "url": "https://apim-gateway.pkulaw.com/mcp-law", "serverName": "pkulaw-law-keyword", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "case-semantic-search", "url": "https://apim-gateway.pkulaw.com/mcp-case-search-service", "serverName": "pkulaw-case-semantic-search", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "case-keyword", "url": "https://apim-gateway.pkulaw.com/mcp-case", "serverName": "pkulaw-case-keyword", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "law-item-keyword", "url": "https://apim-gateway.pkulaw.com/mcp-fatiao", "serverName": "pkulaw-law-item-keyword", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "law-recognition", "url": "https://apim-gateway.pkulaw.com/law_recognition", "serverName": "pkulaw-law-recognition", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "case-number-recognition", "url": "https://apim-gateway.pkulaw.com/case_number_recognition", "serverName": "pkulaw-case-number-recognition", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "citation-validator", "url": "https://apim-gateway.pkulaw.com/pku_citation_validator", "serverName": "pkulaw-citation-validator", "transport": "streamable-http", "headers": {} },
+        { "serverKey": "doc-link", "url": "https://apim-gateway.pkulaw.com/add-doc-link", "serverName": "pkulaw-doc-link", "transport": "streamable-http", "headers": {} }
+      ],
+      "prompts": [
+        { "title": "法规与法条检索", "text": "用北大法宝 MCP 检索与「{{topic}}」相关的现行法律规定，并给出法条原文和效力信息", "server": "law-search" },
+        { "title": "典型司法案例", "text": "用北大法宝 MCP 检索与「{{caseTopic}}」相关的典型司法案例，并列出案号和裁判要点", "server": "case-semantic-search" },
+        { "title": "法律引用识别", "text": "用北大法宝 MCP 识别并核验 {{citation}} 的标准出处和现行法条原文", "server": "law-recognition" },
+        { "title": "法律引用核验", "text": "用北大法宝 MCP 核验 {{citation}} 是否准确，并说明当前效力状态", "server": "citation-validator" }
+      ]
+    },
+    {
+      "id": "wind-stock-data",
+      "name": "Wind·股票数据",
+      "vendor": "Wind 万得",
+      "icon": "/mcp-connector/ui/assets/wind-logo.png",
+      "category": "金融投资",
+      "summary": "全球股票档案 / 行情 / 技术指标 / 财务与公司事件",
+      "description": "接入万得股票数据服务，覆盖公司档案、股本与股东、行情报价、技术指标、基本面财务、公司事件及风险波动性数据。需使用 Wind Key，服务权限以万得账户实际开通范围为准。",
+      "tags": ["股票", "行情", "财务", "技术指标", "第三方收录"],
+      "published": true,
+      "featured": true,
+      "homepage": "https://aifinmarket.wind.com.cn/#/market?tab=mcps&detailType=mcp&detailId=wind_stock_data-0",
+      "promptVariables": [
+        { "name": "stock", "label": "股票名称或代码", "default": "贵州茅台（600519.SH）", "placeholder": "例如：贵州茅台（600519.SH）", "required": true }
+      ],
+      "auth": {
+        "mode": "bearer",
+        "credentialName": "Wind API Key（个人密钥）",
+        "credentialPlaceholder": "请输入您的个人 Wind API Key",
+        "credentialDescription": "用于访问 Wind MCP 的个人访问令牌；仅保存在 DSH 本机。",
+        "credentialHelpLabel": "如何获取 Wind API Key？"
+      },
+      "servers": [
+        {
+          "serverKey": "stock-data",
+          "url": "https://mcp.wind.com.cn/vserver_stock_data/mcp/",
+          "serverName": "wind_stock_data",
+          "transport": "streamable-http",
+          "headers": { "Accept": "application/json, text/event-stream" }
+        }
+      ],
+      "prompts": [
+        { "title": "公司档案与行业", "text": "用 Wind 股票数据 MCP 查询 {{stock}} 的公司档案、主营业务和所属行业", "server": "stock-data" },
+        { "title": "最新行情", "text": "用 Wind 股票数据 MCP 查询 {{stock}} 的最新价格、成交量、换手率和买卖报价", "server": "stock-data" },
+        { "title": "技术与波动指标", "text": "用 Wind 股票数据 MCP 查询 {{stock}} 最近 20 个交易日的 MACD、RSI、波动率和涨跌幅", "server": "stock-data" },
+        { "title": "核心财务指标", "text": "用 Wind 股票数据 MCP 查询 {{stock}} 最新报告期的营业收入、净利润、ROE 和现金流", "server": "stock-data" }
+      ]
+    },
+    {
+      "id": "legacy-internal",
+      "name": "内测·待上架连接器",
+      "vendor": "内部团队",
+      "category": "其他",
+      "summary": "下架示例：published=false 不出现在用户货架",
+      "description": "该条目用于演示「下架」语义——已装用户保留连接，但新用户刷新目录不可见。",
+      "tags": ["内测"],
+      "published": false,
+      "featured": false,
+      "auth": { "mode": "none" },
+      "servers": [
+        { "serverKey": "internal", "url": "https://mcp.internal.example.com/stream", "serverName": "internal-demo", "transport": "streamable-http", "headers": {} }
+      ]
+    }
+  ]
+}

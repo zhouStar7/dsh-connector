@@ -1,0 +1,1450 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MCP连接器</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f8f9fb;
+    --card: #ffffff;
+    --line: #e5e7eb;
+    --text: #111827;
+    --text-2: #4b5563;
+    --muted: #9ca3af;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-light: #eef2ff;
+    --ok: #059669;
+    --ok-bg: #ecfdf5;
+    --warn: #d97706;
+    --warn-bg: #fffbeb;
+    --bad: #dc2626;
+    --bad-bg: #fef2f2;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111318;
+      --card: #1b1e25;
+      --line: #30343d;
+      --text: #f3f4f6;
+      --text-2: #c4c8d0;
+      --muted: #8e96a3;
+      --accent: #818cf8;
+      --accent-hover: #6366f1;
+      --accent-light: #252750;
+      --ok: #34d399;
+      --ok-bg: #0d3027;
+      --warn: #fbbf24;
+      --warn-bg: #35280b;
+      --bad: #f87171;
+      --bad-bg: #3b171b;
+      --shadow: 0 1px 3px rgba(0,0,0,.35);
+      --shadow-lg: 0 16px 35px rgba(0,0,0,.45);
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .app { display: flex; flex-direction: column; height: 100vh; position: relative; }
+  .app.detail-open main { overflow: hidden; }
+
+  /* Header */
+  header {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 16px 24px; border-bottom: 1px solid var(--line);
+    background: var(--card); position: sticky; top: 0; z-index: 5;
+    flex-shrink: 0;
+  }
+  header .logo { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--text); }
+  header .logo .puzzle { font-size: 22px; }
+  .tabs { display: flex; gap: 0; background: var(--bg); padding: 3px; border-radius: 10px; }
+  .tabs button {
+    display: inline-flex; align-items: center; gap: 5px;
+    border: 0; background: transparent; color: var(--text-2);
+    padding: 6px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500;
+    transition: all .15s;
+  }
+  .tabs button:hover { color: var(--text); }
+  .tabs button.active { background: var(--card); color: var(--accent); box-shadow: var(--shadow); font-weight: 600; }
+  .tab-count {
+    min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--line); color: var(--text-2); font-size: 10px; line-height: 1;
+  }
+  .tabs button.active .tab-count { background: var(--accent-light); color: var(--accent); }
+  .tab-count:empty { display: none; }
+  .header-spacer { flex: 1; }
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 6px 12px; width: 260px; transition: border-color .15s;
+  }
+  .search-box:focus-within { border-color: var(--accent); }
+  .search-box input {
+    border: 0; background: transparent; outline: none; font: inherit; font-size: 13px;
+    color: var(--text); width: 100%;
+  }
+  .search-box input::placeholder { color: var(--muted); }
+  .icon-btn {
+    border: 1px solid var(--line); background: var(--card); color: var(--text-2);
+    border-radius: 8px; padding: 6px 14px; cursor: pointer; font-size: 13px; font-weight: 500;
+    transition: all .15s;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .icon-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .icon-btn.primary:hover { background: var(--accent-hover); }
+
+  /* Main */
+  main { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* Stats bar */
+  .stats { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .stats .count { font-size: 13px; color: var(--text-2); }
+  .stats .count strong { color: var(--text); font-weight: 600; }
+  .market-nav { flex: 0 0 100%; min-width: 0; order: 4; }
+  .market-filters { position: static; display: flex; align-items: center; }
+  .filter-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .filter-chip {
+    border: 1px solid var(--line); background: var(--bg); color: var(--text-2);
+    border-radius: 999px; padding: 5px 10px; cursor: pointer; font: inherit; font-size: 12px;
+  }
+  .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-chip.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 600; }
+  .category-chips { width: 100%; display: flex; gap: 5px; flex-wrap: nowrap; overflow: visible; }
+  .category-chip { flex: 0 0 auto; padding-inline: 9px; }
+
+  /* Grouped marketplace */
+  .market-section { margin-bottom: 26px; }
+  .market-section:last-child { margin-bottom: 0; }
+  .market-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .market-section-title { display: flex; align-items: baseline; gap: 8px; margin: 0; font-size: 14px; font-weight: 650; }
+  .market-section-count { color: var(--muted); font-size: 11px; font-weight: 400; }
+  .market-section-toggle { border: 0; background: transparent; color: var(--text-2); cursor: pointer; font: inherit; font-size: 12px; padding: 4px 0; }
+  .market-section-toggle:hover { color: var(--accent); }
+
+  /* Grid - TraeWork 风格：3 列 */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+
+  /* Card - TraeWork 风格：标题上移，描述 2 行 */
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px; display: flex; align-items: flex-start; gap: 12px;
+    transition: border-color .15s, box-shadow .15s;
+    box-shadow: var(--shadow);
+    min-height: 90px;
+  }
+  .card:hover { border-color: #c7d2fe; box-shadow: var(--shadow-lg); }
+  .card.featured { border-color: #fbbf24; }
+  .card .icon {
+    width: 40px; height: 40px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; background: var(--bg); flex: 0 0 auto;
+    overflow: hidden;
+    margin-top: 2px;
+  }
+  .card .icon img { width: 100%; height: 100%; object-fit: contain; }
+  .card .content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .card .name { font-weight: 600; font-size: 14px; line-height: 1.4; }
+  .card .summary { color: var(--text-2); font-size: 12px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card .actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; align-self: center; }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 1px 7px; background: var(--bg); color: var(--muted); font-size: 10px; font-weight: 600; }
+  .badge.pass { color: var(--ok); background: var(--ok-bg); }
+  .badge.partial { color: var(--warn); background: var(--warn-bg); }
+  .badge.fail { color: var(--bad); background: var(--bad-bg); }
+
+  /* Buttons */
+  .btn {
+    border: 0; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 13px; font-weight: 600;
+    background: var(--accent); color: #fff; transition: background .15s;
+  }
+  .btn:hover { background: var(--accent-hover); }
+  .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--text-2); }
+  .btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.danger { background: transparent; border: 1px solid #fecaca; color: var(--bad); }
+  .btn.danger:hover { border-color: var(--bad); background: var(--bad-bg); }
+  .btn.status-warning { background: var(--warn-bg); border: 1px solid #fde68a; color: #92400e; }
+  .btn.status-warning:hover { background: #fef3c7; border-color: var(--warn); }
+  .btn.status-bad { background: var(--bad-bg); border: 1px solid #fecaca; color: var(--bad); }
+  .btn.status-bad:hover { background: #fee2e2; border-color: var(--bad); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* Installed rows */
+  .rows { display: flex; flex-direction: column; gap: 12px; }
+  .row {
+    display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); transition: box-shadow .15s;
+  }
+  .row:hover { box-shadow: var(--shadow-lg); }
+  .row .info { flex: 1; min-width: 0; }
+  .row .rname { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .row .rmeta { font-size: 12px; color: var(--muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .switch { position: relative; width: 44px; height: 24px; cursor: pointer; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .slider { position: absolute; inset: 0; background: #d1d5db; border-radius: 999px; transition: .2s; }
+  .switch .slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .switch input:checked + .slider { background: var(--accent); }
+  .switch input:checked + .slider::before { transform: translateX(20px); }
+
+  /* Empty */
+  .empty { text-align: center; color: var(--muted); padding: 80px 0; font-size: 15px; }
+  .migration-banner { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px 14px; border: 1px solid #fbbf24; background: var(--warn-bg); border-radius: 10px; color: var(--text-2); }
+  .migration-banner .copy { flex: 1; min-width: 0; font-size: 12px; }
+  .migration-banner strong { display: block; color: var(--text); font-size: 13px; }
+
+  /* Detail Overlay */
+  .detail-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .detail-overlay.active { opacity: 1; pointer-events: auto; }
+  .detail-modal {
+    background: var(--card); border-radius: 16px; width: min(700px, calc(100% - 32px));
+    max-height: calc(100% - 32px); display: flex; flex-direction: column;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(20px); transition: transform .2s;
+    overflow: hidden;
+  }
+  .detail-overlay.active .detail-modal { transform: translateY(0); }
+  .detail-header {
+    padding: 20px 20px 16px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 14px;
+    position: sticky; top: 0; background: var(--card);
+    border-radius: 16px 16px 0 0; flex-shrink: 0;
+  }
+  .detail-header .icon {
+    width: 48px; height: 48px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-light); font-size: 24px; flex-shrink: 0;
+  }
+  .detail-header .icon img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
+  .detail-header .info { flex: 1; min-width: 0; }
+  .detail-header .name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .detail-header .vendor { font-size: 13px; color: var(--muted); }
+  .detail-header .close-btn {
+    border: 1px solid var(--line); background: var(--bg); color: #374151; cursor: pointer;
+    width: 34px; height: 34px; border-radius: 9px; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 400; padding: 0 0 2px; line-height: 1;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .detail-header .close-btn:hover { color: #111827; background: #e5e7eb; border-color: #d1d5db; }
+  .detail-header .close-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .detail-body { padding: 20px; overflow-y: auto; flex: 1; min-height: 0; }
+  .detail-desc { font-size: 14px; color: var(--text-2); line-height: 1.7; margin-bottom: 20px; }
+  .detail-section { margin-bottom: 20px; }
+  .detail-section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .detail-section-title {
+    font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .detail-section-meta { color: var(--muted); font-size: 12px; font-weight: 400; }
+  .detail-section-spacer { flex: 1; }
+  .detail-section-title .emoji { font-size: 16px; }
+  .text-btn {
+    border: 0; background: transparent; color: var(--accent); cursor: pointer;
+    padding: 4px 6px; border-radius: 6px; font: inherit; font-size: 12px; font-weight: 600;
+  }
+  .text-btn:hover { background: var(--accent-light); }
+  .prompt-list { display: flex; flex-direction: column; gap: 8px; }
+  .prompt-item {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+    min-height: 52px; padding: 10px 10px 10px 12px; display: flex; align-items: center; gap: 12px;
+    transition: border-color .15s;
+  }
+  .prompt-item:hover { border-color: var(--accent); }
+  .prompt-item .text { flex: 1; min-width: 0; font-size: 13px; color: var(--text-2); line-height: 1.5; }
+  .prompt-item .send-btn {
+    border: 0; background: var(--accent); color: #fff; border-radius: 6px;
+    padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: 500;
+    transition: background .15s; flex-shrink: 0;
+  }
+  .prompt-item .send-btn:hover { background: var(--accent-hover); }
+  .prompt-item .send-btn:disabled, .btn-primary:disabled { opacity: .55; cursor: wait; }
+  .tools-disclosure { border: 1px solid var(--line); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+  .tools-disclosure > summary {
+    list-style: none; min-height: 48px; padding: 0 14px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;
+    background: var(--card); user-select: none;
+  }
+  .tools-disclosure > summary::-webkit-details-marker { display: none; }
+  .tools-disclosure > summary::after { content: "⌄"; margin-left: 4px; color: var(--muted); font-size: 18px; transition: transform .15s; }
+  .tools-disclosure[open] > summary { border-bottom: 1px solid var(--line); }
+  .tools-disclosure[open] > summary::after { transform: rotate(180deg); }
+  .tools-summary { color: var(--muted); font-size: 12px; font-weight: 400; margin-left: auto; }
+  .tools-panel { background: var(--bg); padding: 12px; }
+  .tools-toolbar { margin-bottom: 10px; }
+  .tools-search {
+    width: 100%; height: 36px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--card); color: var(--text); padding: 0 11px; font: inherit; font-size: 12px;
+  }
+  .tools-search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+  .tools-list { display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 4px; }
+  .tools-server { background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: 0 0 auto; }
+  .tools-server-header { font-size: 13px; font-weight: 600; color: var(--text); padding: 9px 12px; display: flex; align-items: center; gap: 6px; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .tools-server-header .count { font-size: 11px; color: var(--muted); font-weight: 400; }
+  .tool-item { padding: 10px 12px; border-top: 1px solid #f0f1f3; }
+  .tool-item:first-child { border-top: 0; }
+  .tool-item:hover { background: var(--accent-light); }
+  .tool-name-row { display: flex; align-items: center; gap: 7px; }
+  .tool-name { color: var(--text); font: 600 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; overflow-wrap: anywhere; }
+  .tool-deprecated { color: var(--warn); background: var(--warn-bg); border-radius: 999px; padding: 1px 6px; font-size: 10px; line-height: 1.5; flex: 0 0 auto; }
+  .tool-description { color: var(--text-2); font-size: 12px; line-height: 1.55; margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .tool-description.empty { color: var(--muted); font-style: italic; }
+  .tools-loading, .tools-error { font-size: 13px; color: var(--muted); padding: 8px; }
+  .tools-error { color: var(--bad); }
+  .tools-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 24px 8px; }
+  .tools-more { width: 100%; margin-top: 10px; border: 1px dashed var(--line); background: var(--card); color: var(--accent); border-radius: 8px; padding: 8px; cursor: pointer; font: inherit; font-size: 12px; }
+  .detail-actions { display: flex; gap: 12px; margin-top: 24px; }
+  .detail-actions button {
+    flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all .15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; border: 0; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: var(--card); color: var(--text-2); border: 1px solid var(--line); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: var(--bad-bg); color: var(--bad); border: 0; }
+  .btn-danger:hover { background: #fee2e2; }
+
+  /* Toast */
+  .toast {
+    position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%);
+    background: var(--card); border: 1px solid var(--line); color: var(--text);
+    padding: 12px 20px; border-radius: 12px; box-shadow: var(--shadow-lg);
+    z-index: 300; max-width: 80vw; display: none; font-size: 13px;
+  }
+  .toast.show { display: block; }
+  .toast.ok { border-color: #a7f3d0; }
+  .toast.bad { border-color: #fecaca; }
+
+  /* Modal */
+  .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.52); display: none; align-items: center; justify-content: center; z-index: 200; }
+  .modal-mask.show { display: flex; }
+  .modal { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; width: 520px; max-width: 92vw; max-height: 88vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+  .modal h3 { margin: 0 0 16px; font-size: 16px; }
+  .modal label { display: block; font-size: 12px; color: var(--muted); margin: 12px 0 4px; font-weight: 500; }
+  .modal input, .modal textarea, .modal select {
+    width: 100%; background: var(--bg); border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: 10px 12px; font: inherit; font-size: 13px;
+    transition: border-color .15s;
+  }
+  .modal input:focus, .modal textarea:focus, .modal select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+  .modal .m-actions {
+    position: sticky; bottom: 0; z-index: 2;
+    display: flex; gap: 8px; justify-content: flex-end;
+    margin-top: 14px; padding: 12px 0 2px;
+    background: var(--card); border-top: 1px solid var(--line);
+  }
+  .modal-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--bg); padding: 4px; border-radius: 9px; margin-bottom: 14px; }
+  .modal-tabs button { border: 0; background: transparent; color: var(--text-2); border-radius: 7px; padding: 7px 4px; cursor: pointer; font: inherit; font-size: 12px; }
+  .modal-tabs button.active { background: var(--card); color: var(--accent); box-shadow: var(--shadow); font-weight: 600; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+  .field-label-row label { margin: 0; }
+  #import-json { height: 180px; min-height: 132px; max-height: 240px; resize: vertical; }
+  .field-help { color: var(--muted); font-size: 11px; margin-top: 4px; line-height: 1.45; }
+  .field-help a { color: var(--accent); text-decoration: none; }
+  .field-help a:hover { text-decoration: underline; }
+  .form-note { color: var(--text-2); background: var(--accent-light); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 12px 0; font-size: 11px; line-height: 1.55; }
+  .form-note strong { display: block; color: var(--text); font-size: 12px; margin-bottom: 2px; }
+  .server-preview { max-height: 132px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; margin-top: 10px; }
+  .server-preview div { padding: 7px 10px; border-top: 1px solid var(--line); color: var(--text-2); font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; overflow-wrap: anywhere; }
+  .server-preview div:first-child { border-top: 0; }
+  .inline-error { color: var(--bad); background: var(--bad-bg); border-radius: 7px; padding: 8px 10px; margin-top: 12px; font-size: 12px; display: none; }
+  .inline-error.show { display: block; }
+
+  @media (max-width: 620px) {
+    header { padding: 12px; }
+    .header-spacer { display: none; }
+    .search-box { order: 3; width: 100%; }
+    main { padding: 14px; }
+    .grid { grid-template-columns: 1fr; }
+    .card { flex-wrap: wrap; }
+    .card .actions { width: 100%; justify-content: flex-end; }
+    .form-row { grid-template-columns: 1fr; gap: 0; }
+    .market-filters { align-items: stretch; }
+    .category-chips { flex-wrap: wrap; }
+  }
+
+  /* Scrollbar */
+  main::-webkit-scrollbar, .detail-body::-webkit-scrollbar, .tools-list::-webkit-scrollbar { width: 6px; }
+  main::-webkit-scrollbar-track, .detail-body::-webkit-scrollbar-track, .tools-list::-webkit-scrollbar-track { background: transparent; }
+  main::-webkit-scrollbar-thumb, .detail-body::-webkit-scrollbar-thumb, .tools-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+  main::-webkit-scrollbar-thumb:hover, .detail-body::-webkit-scrollbar-thumb:hover, .tools-list::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="tabs" id="tabs">
+      <button data-view="market" class="active">市场 <span class="tab-count" id="market-tab-count"></span></button>
+      <button data-view="installed">已安装 <span class="tab-count" id="installed-tab-count"></span></button>
+    </div>
+    <div class="header-spacer"></div>
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted);flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="search" type="text" placeholder="搜索连接器…" />
+    </div>
+    <button class="icon-btn primary" id="add-connection" type="button">＋ 添加连接</button>
+    <button class="icon-btn" id="refresh" title="刷新连接器目录">刷新连接器目录</button>
+    <div class="market-nav" id="market-nav" aria-label="市场分类导航"></div>
+  </header>
+  <main id="main"></main>
+
+  <!-- Detail Overlay (inside .app so absolute covers header too) -->
+  <div id="detail-overlay" class="detail-overlay" aria-hidden="true">
+    <div class="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-name">
+      <div class="detail-header">
+        <div class="icon" id="detail-icon"></div>
+        <div class="info">
+          <div class="name" id="detail-name"></div>
+          <div class="vendor" id="detail-vendor"></div>
+        </div>
+        <button class="close-btn" id="detail-close" type="button" aria-label="关闭详情" title="关闭详情">×</button>
+      </div>
+      <div class="detail-body">
+        <div class="detail-desc" id="detail-desc"></div>
+        <div class="detail-section">
+          <div class="detail-section-head">
+            <div class="detail-section-title"><span class="emoji">💡</span> <span>试试这样用</span> <span class="detail-section-meta" id="prompt-meta"></span></div>
+            <div class="detail-section-spacer"></div>
+            <button class="text-btn" id="prompt-next" type="button" hidden>换一批</button>
+          </div>
+          <div class="prompt-list" id="detail-prompts"></div>
+        </div>
+        <details class="tools-disclosure" id="tools-disclosure">
+          <summary><span>🧰 <span>工具详情</span></span><span class="tools-summary" id="tools-summary">加载中…</span></summary>
+          <div class="tools-panel">
+            <div class="tools-toolbar">
+              <input class="tools-search" id="tools-search" type="search" placeholder="搜索工具名称或描述…" autocomplete="off" />
+            </div>
+            <div class="tools-list" id="detail-tools">
+              <div class="tools-loading">加载中...</div>
+            </div>
+          </div>
+        </details>
+        <div class="detail-actions">
+          <button class="btn-primary" id="detail-try-btn">💬 去试试</button>
+          <button class="btn-danger" id="detail-disconnect-btn">断开连接</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="modalMask" aria-hidden="true">
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  const API = '/mcp-connector/api';
+  const API_TIMEOUTS = {
+    connect: 145_000,
+    configure: 145_000,
+    importJson: 145_000,
+    installFromUrl: 145_000,
+    setEnabled: 130_000,
+    toolsList: 20_000,
+    healthCheck: 10_000,
+  };
+  const DEFAULT_API_TIMEOUT_MS = 30_000;
+  const $ = (sel) => document.querySelector(sel);
+  const main = $('#main');
+  const toast = $('#toast');
+  const searchInput = $('#search');
+  const LABELS = {
+    details: '详情', connect: '连接', connected: '已连接', configured: '已配置', configure: '配置',
+    reauthorize: '需重新授权', recovering: '自动重试中', connectionError: '连接异常', partialError: '部分异常', disabled: '已停用',
+    send: '发送', fillSend: '填写并发送', connectToUse: '连接后使用', try: '💬 去试试',
+    connectTry: '🔗 连接后试用', configureConnect: '🔑 录入凭据并连接',
+    reconfigureCredential: '🔑 重新配置凭据', loading: '加载中…',
+  };
+  const t = (key) => LABELS[key] || key;
+  const MCP_JSON_EXAMPLE = JSON.stringify({
+    mcpServers: {
+      'my-server': {
+        type: 'streamable-http',
+        url: 'https://example.com/mcp',
+        headers: { Authorization: 'Bearer YOUR_ACCESS_TOKEN' },
+      },
+      'local-server': {
+        type: 'stdio',
+        command: 'npx',
+        args: ['-y', '@vendor/example-mcp-server'],
+      },
+    },
+  }, null, 2);
+
+  let view = 'market';
+  let marketItems = {};
+  let searchQuery = '';
+  let marketCategory = '';
+  const PROMPT_PAGE_SIZE = 4;
+  let detailPrompts = [];
+  let promptPage = 0;
+  let detailConnector = null;
+  let detailToolServers = [];
+  let detailNeedsReconfigure = false;
+  let detailFailureState = '';
+  let toolRenderLimit = 50;
+  let detailLoadId = 0;
+  const MARKET_SECTION_PREVIEW_LIMIT = 4;
+  const expandedMarketSections = new Set();
+  let lastModalFocus = null;
+  let pendingPrompt = null;
+  const PROMPT_REQUEST_TYPE = 'mcp-connector:start-session';
+  const PROMPT_RESULT_TYPE = 'mcp-connector:start-session-result';
+  let promptRequestId = null;
+  let promptRequestTimer = null;
+  let initialHealthCheckStarted = false;
+
+  async function call(method, params, { timeoutMs: timeoutOverride } = {}) {
+    const controller = new AbortController();
+    const timeoutMs = timeoutOverride || API_TIMEOUTS[method] || DEFAULT_API_TIMEOUT_MS;
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ method, params }),
+        signal: controller.signal,
+      });
+      const data = await res.json();
+      if (!res.ok && data.ok !== false) return { ok: false, message: `请求失败（HTTP ${res.status}）` };
+      return data;
+    } catch (error) {
+      if (controller.signal.aborted) {
+        return {
+          ok: false,
+          message: `请求超时（${Math.ceil(timeoutMs / 1000)} 秒），请检查服务状态和 Host 日志后重试`,
+          detail: { kind: 'timeout' },
+        };
+      }
+      return { ok: false, message: `无法连接 MCP 连接器服务：${error?.message || error}` };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function showToast(message, ok) {
+    toast.textContent = message;
+    toast.className = 'toast show ' + (ok === false ? 'bad' : 'ok');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => { toast.className = 'toast'; }, 3200);
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function isImageIcon(value) {
+    return typeof value === 'string' && /^(?:https?:|data:image\/|\/)/.test(value);
+  }
+
+  function setPromptLaunchPending(pending) {
+    document.querySelectorAll('#detail-prompts .send-btn, #detail-try-btn').forEach((button) => {
+      button.disabled = pending;
+      if (pending) {
+        button.dataset.idleLabel = button.textContent;
+        button.textContent = '正在发送…';
+      } else if (button.dataset.idleLabel) {
+        button.textContent = button.dataset.idleLabel;
+        delete button.dataset.idleLabel;
+      }
+    });
+  }
+
+  function finishPromptLaunch(requestId, ok, message) {
+    if (requestId !== promptRequestId) return;
+    clearTimeout(promptRequestTimer);
+    promptRequestTimer = null;
+    promptRequestId = null;
+    setPromptLaunchPending(false);
+    showToast(message || (ok ? '已带入新会话' : '打开新会话失败，请重试'), ok);
+  }
+
+  window.addEventListener('message', (event) => {
+    if (event.origin !== window.location.origin || event.source !== window.parent) return;
+    if (event.data?.type !== PROMPT_RESULT_TYPE) return;
+    finishPromptLaunch(event.data.requestId, event.data.ok === true, event.data.message);
+  });
+
+  function notifyDetailState(open) {
+    if (window.parent === window) return;
+    window.parent.postMessage({ type: 'mcp-connector:detail-state', open: open === true }, window.location.origin);
+  }
+
+  function setDetailOpen(open) {
+    const overlay = $('#detail-overlay');
+    overlay.classList.toggle('active', open);
+    overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+    $('.app').classList.toggle('detail-open', open);
+    notifyDetailState(open);
+    if (open) setTimeout(() => $('#detail-close').focus(), 0);
+  }
+
+  function closeDetail() {
+    detailLoadId += 1;
+    setDetailOpen(false);
+  }
+
+  function promptVariableNames(text) {
+    const names = [];
+    const seen = new Set();
+    const re = /\{\{\s*([A-Za-z][A-Za-z0-9_-]*)\s*\}\}|\{\s*([A-Za-z][A-Za-z0-9_-]*)\s*\}/g;
+    for (const match of String(text || '').matchAll(re)) {
+      const name = match[1] || match[2];
+      if (!seen.has(name)) { seen.add(name); names.push(name); }
+    }
+    return names;
+  }
+
+  function promptVariables(prompt) {
+    const definitions = [...(detailConnector?.promptVariables || []), ...(prompt.variables || [])];
+    const byName = Object.fromEntries(definitions.map((variable) => [variable.name, variable]));
+    return promptVariableNames(prompt.text || prompt.title || '').map((name) => byName[name] || {
+      name,
+      label: name,
+      placeholder: `请输入${name}`,
+      required: true,
+    });
+  }
+
+  function renderPromptText(prompt) {
+    const specs = Object.fromEntries(promptVariables(prompt).map((variable) => [variable.name, variable]));
+    return esc(prompt.text || prompt.title || '').replace(/\{\{\s*([A-Za-z][A-Za-z0-9_-]*)\s*\}\}|\{\s*([A-Za-z][A-Za-z0-9_-]*)\s*\}/g, (_token, a, b) => {
+      const variable = specs[a || b] || { label: a || b };
+      const displayValue = String(variable.default || '').trim() || variable.label;
+      return `<mark style="color:var(--accent);background:var(--accent-light);border-radius:4px;padding:0 3px;">${esc(displayValue)}</mark>`;
+    });
+  }
+
+  function promptNeedsInput(prompt) {
+    return promptVariables(prompt).some((variable) => variable.required !== false && !String(variable.default || '').trim());
+  }
+
+  function renderPromptPage() {
+    const total = detailPrompts.length;
+    const pageCount = Math.max(1, Math.ceil(total / PROMPT_PAGE_SIZE));
+    promptPage = ((promptPage % pageCount) + pageCount) % pageCount;
+    const start = promptPage * PROMPT_PAGE_SIZE;
+    const visible = detailPrompts.slice(start, start + PROMPT_PAGE_SIZE);
+    $('#prompt-meta').textContent = total > 0 ? `· 精选 ${visible.length} / 共 ${total} 条` : '';
+    $('#prompt-next').hidden = total <= PROMPT_PAGE_SIZE;
+    const usable = detailConnector?.connected?.length > 0 && !detailNeedsReconfigure;
+    $('#detail-prompts').innerHTML = visible.length > 0
+      ? visible.map((prompt, index) => `<div class="prompt-item"><div class="text">${renderPromptText(prompt)}</div><button class="send-btn" type="button" data-prompt-index="${start + index}" ${usable ? '' : 'disabled'}>${usable ? t(promptNeedsInput(prompt) ? 'fillSend' : 'send') : t('connectToUse')}</button></div>`).join('')
+      : '<div style="color:var(--muted);font-size:13px;">暂无预设 Prompt</div>';
+  }
+
+  function updateToolsSummary() {
+    const totalTools = detailToolServers.reduce((sum, server) => sum + (server.tools?.length || 0), 0);
+    $('#tools-summary').textContent = `${detailToolServers.length} 个服务 · ${totalTools} 个工具`;
+    $('#tools-search').placeholder = totalTools > 0
+      ? `搜索 ${totalTools} 个工具的名称或描述…`
+      : '搜索工具名称或描述…';
+  }
+
+  function isDeprecatedTool(tool) {
+    return /(?:\bdeprecated\b|已弃用|已废弃|不再推荐)/i.test(`${tool?.title || ''}\n${tool?.description || ''}`);
+  }
+
+  function renderTools() {
+    const query = $('#tools-search').value.trim().toLowerCase();
+    if (detailToolServers.length === 0) {
+      updateToolsSummary();
+      $('#detail-tools').innerHTML = '<div class="tools-empty">暂无可用工具</div>';
+      return;
+    }
+    let matchedTools = 0;
+    let renderedTools = 0;
+    let remaining = toolRenderLimit;
+    const groups = detailToolServers.map((server) => {
+      const label = server.serverName || server.serverKey || 'MCP Server';
+      if (!server.ok) {
+        if (query) return '';
+        return `<div class="tools-server"><div class="tools-server-header">${esc(label)} <span class="count">· 加载失败</span></div><div class="tools-error">${esc(server.error || '未知错误')}</div></div>`;
+      }
+      const matched = (server.tools || []).filter((tool) => {
+        if (!query) return true;
+        return `${tool.name || ''}\n${tool.title || ''}\n${tool.description || ''}`.toLowerCase().includes(query);
+      }).sort((left, right) => Number(isDeprecatedTool(left)) - Number(isDeprecatedTool(right)));
+      if (query && matched.length === 0) return '';
+      matchedTools += matched.length;
+      const tools = matched.slice(0, Math.max(0, remaining));
+      remaining -= tools.length;
+      renderedTools += tools.length;
+      if (tools.length === 0 && matched.length > 0) return '';
+      const items = tools.length > 0
+        ? tools.map((tool) => {
+          const description = tool.description || (tool.title && tool.title !== tool.name ? tool.title : '');
+          const deprecated = isDeprecatedTool(tool);
+          return `<div class="tool-item"><div class="tool-name-row"><div class="tool-name">${esc(tool.name || tool.title || '未命名工具')}</div>${deprecated ? '<span class="tool-deprecated">已弃用</span>' : ''}</div><div class="tool-description${description ? '' : ' empty'}">${esc(description || '暂无描述')}</div></div>`;
+        }).join('')
+        : server.managed
+          ? '<div class="tools-loading">Host 已完成 stdio 初始化，但该 Server 当前没有可展示的工具。</div>'
+          : '<div class="tools-loading">暂无工具</div>';
+      return `<div class="tools-server"><div class="tools-server-header">${esc(label)} <span class="count">· 显示 ${tools.length} / ${matched.length} 个</span></div>${items}</div>`;
+    }).filter(Boolean);
+    $('#detail-tools').innerHTML = groups.length > 0
+      ? `${groups.join('')}${renderedTools < matchedTools ? `<button class="tools-more" id="tools-more" type="button">再显示 ${Math.min(50, matchedTools - renderedTools)} 个（剩余 ${matchedTools - renderedTools}）</button>` : ''}`
+      : `<div class="tools-empty">没有匹配“${esc($('#tools-search').value.trim())}”的工具</div>`;
+    if (query) $('#tools-summary').textContent = `匹配 ${matchedTools} 个工具 · 已渲染 ${renderedTools}`;
+    else updateToolsSummary();
+  }
+
+  function openModal(title, bodyHtml) {
+    lastModalFocus = document.activeElement;
+    $('#modal').innerHTML = `<h3 id="modal-title">${esc(title)}</h3>${bodyHtml}`;
+    $('#modalMask').classList.add('show');
+    $('#modalMask').setAttribute('aria-hidden', 'false');
+    setTimeout(() => $('#modal').querySelector('input, textarea, select, button')?.focus(), 0);
+  }
+  function closeModal() {
+    $('#modalMask').classList.remove('show');
+    $('#modalMask').setAttribute('aria-hidden', 'true');
+    pendingPrompt = null;
+    lastModalFocus?.focus?.();
+    lastModalFocus = null;
+  }
+  $('#modalMask').addEventListener('click', (e) => { if (e.target.id === 'modalMask') closeModal(); });
+
+  function matchesSearch(d) {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (d.name || '').toLowerCase().includes(q)
+      || (d.vendor || '').toLowerCase().includes(q)
+      || (d.summary || '').toLowerCase().includes(q)
+      || (d.tags || []).some(t => t.toLowerCase().includes(q));
+  }
+
+  const CATEGORIES = [
+    { value: '', label: '全部' },
+    { value: 'recommended', label: '推荐' },
+    { value: '企业数据', label: '企业数据' },
+    { value: '金融投资', label: '金融投资' },
+    { value: '法律合规', label: '法律合规' },
+    { value: '开发工具', label: '开发工具' },
+    { value: '办公协作', label: '办公协作' },
+    { value: '调研分析', label: '调研分析' },
+    { value: '设计创意', label: '设计创意' },
+    { value: '效率工具', label: '效率工具' },
+    { value: '其他', label: '其他' },
+  ];
+
+  const CATEGORY_MAP = {
+    '企业数据': '企业数据', '金融数据': '金融投资', '金融投资': '金融投资',
+    '法律数据': '法律合规', '法律合规': '法律合规', '开发工具': '开发工具',
+    '办公协作': '办公协作', '调研分析': '调研分析', '设计创意': '设计创意',
+    '数据采集': '效率工具', '效率工具': '效率工具', '通用工具': '其他', '其他': '其他',
+  };
+  function normalizeCategory(c) { return CATEGORY_MAP[c] || '其他'; }
+
+  function matchesMarketFilters(d) {
+    if (!matchesSearch(d)) return false;
+    if (marketCategory === 'recommended' && !d.featured) return false;
+    if (marketCategory && marketCategory !== 'recommended' && normalizeCategory(d.category) !== marketCategory) return false;
+    return true;
+  }
+
+  function marketFilterHtml() {
+    const categoryChips = CATEGORIES.map((cat) => `<button class="filter-chip category-chip ${cat.value === marketCategory ? 'active' : ''}" type="button" data-category-filter="${esc(cat.value)}" aria-pressed="${cat.value === marketCategory ? 'true' : 'false'}">${esc(cat.label)}</button>`).join('');
+    return `<div class="market-filters" role="group" aria-label="市场分类"><div class="filter-chips category-chips" role="group" aria-label="按分类筛选">${categoryChips}</div></div>`;
+  }
+
+  function syncMarketNav() {
+    const nav = $('#market-nav');
+    nav.hidden = view !== 'market';
+    nav.innerHTML = view === 'market' ? marketFilterHtml() : '';
+  }
+
+  function setTabCount(tab, count) {
+    const node = $(`#${tab}-tab-count`);
+    node.textContent = Number.isFinite(count) ? String(count) : '';
+    node.setAttribute('aria-label', Number.isFinite(count) ? `${count} 个` : '');
+  }
+
+  function marketSectionHtml(value, label, items) {
+    if (!items.length) return '';
+    const expanded = expandedMarketSections.has(value);
+    const visible = expanded ? items : items.slice(0, MARKET_SECTION_PREVIEW_LIMIT);
+    const toggle = items.length > MARKET_SECTION_PREVIEW_LIMIT
+      ? `<button class="market-section-toggle" type="button" data-section-toggle="${esc(value)}" aria-expanded="${expanded ? 'true' : 'false'}">${expanded ? '收起' : `查看全部 ${items.length} 个`}</button>`
+      : '';
+    return `<section class="market-section" data-market-section="${esc(value)}"><div class="market-section-head"><h2 class="market-section-title">${esc(label)}<span class="market-section-count">${items.length} 个</span></h2>${toggle}</div><div class="grid">${visible.map(cardHtml).join('')}</div></section>`;
+  }
+
+  function groupedMarketHtml(items) {
+    const searchable = items.filter(matchesSearch);
+    const sections = [
+      { value: 'recommended', label: '推荐', items: searchable.filter((item) => item.featured) },
+      ...CATEGORIES.filter((category) => category.value && category.value !== 'recommended').map((category) => ({
+        ...category,
+        items: searchable.filter((item) => normalizeCategory(item.category) === category.value),
+      })),
+    ];
+    return sections.map((section) => marketSectionHtml(section.value, section.label, section.items)).join('')
+      || '<div class="empty">没有匹配当前搜索条件的连接器</div>';
+  }
+
+  async function loadMarket({ checkHealth = true, preserveScroll = false } = {}) {
+    const previousScrollTop = preserveScroll ? main.scrollTop : 0;
+    syncMarketNav();
+    main.innerHTML = '<div class="empty">加载中…</div>';
+    const [r, status] = await Promise.all([call('catalog', {}), call('status', {})]);
+    if (status.ok) setTabCount('installed', (status.detail?.items ?? []).length);
+    if (!r.ok) { main.innerHTML = `<div class="empty">${esc(r.message)}</div>`; return; }
+    const items = r.detail?.items ?? [];
+    setTabCount('market', items.length);
+    if (!items.length) { main.innerHTML = '<div class="empty">暂无已上架的连接器</div>'; return; }
+    marketItems = {};
+    items.forEach((d) => { marketItems[d.id] = d; });
+    const filtered = items.filter(matchesMarketFilters);
+    const resultHtml = !marketCategory
+      ? groupedMarketHtml(items)
+      : filtered.length > 0
+        ? `<div class="grid">${filtered.map(cardHtml).join('')}</div>`
+        : '<div class="empty">没有匹配当前筛选条件的连接器</div>';
+    main.innerHTML = resultHtml;
+    if (preserveScroll) main.scrollTop = previousScrollTop;
+    if (checkHealth && !initialHealthCheckStarted && items.some((item) => item.connected?.length > 0)) {
+      initialHealthCheckStarted = true;
+      call('healthCheck', {}).then(() => {
+        if (view === 'market') loadMarket({ checkHealth: false });
+      });
+    }
+  }
+
+  function cardHtml(d) {
+    const icon = isImageIcon(d.icon)
+      ? `<img src="${esc(d.icon)}" alt="" onerror="this.parentElement.innerHTML='🔌';" />`
+      : `<span>${esc(d.icon || '🔌')}</span>`;
+    const actions = actionHtml(d);
+    const probe = d.probeStatus && d.probeStatus !== 'unverified' ? `<span class="badge ${esc(d.probeStatus)}">${d.probeStatus}</span>` : '';
+    return `<div class="card ${d.featured ? 'featured' : ''}" data-id="${esc(d.id)}" role="button" tabindex="0" aria-label="查看 ${esc(d.name)} 详情" onclick="window.__mcp.showDetail('${esc(d.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.__mcp.showDetail('${esc(d.id)}')}">
+      <div class="icon">${icon}</div>
+      <div class="content">
+        <div class="name">${esc(d.name)} ${probe}</div>
+        <div class="summary">${esc(d.summary || '')}</div>
+      </div>
+      <div class="actions">${actions}</div>
+    </div>`;
+  }
+
+  function actionHtml(d) {
+    const id = esc(d.id);
+    const configured = d.connected?.length > 0;
+    const state = d.connectionState || (configured ? 'configured' : 'disconnected');
+    if (configured) {
+      if (state === 'healthy') return `<button class="btn ghost" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('details')}</button><button class="btn ghost" disabled>${t('connected')}</button>`;
+      if (state === 'configured') return `<button class="btn ghost" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('details')}</button><button class="btn ghost" disabled>${t('configured')}</button>`;
+      if (state === 'disabled') return `<button class="btn ghost" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('details')}</button><button class="btn ghost" disabled>${t('disabled')}</button>`;
+      if (state === 'reauth') return `<button class="btn ghost" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('details')}</button><button class="btn status-warning" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('reauthorize')}</button>`;
+      if (state === 'recovering') return `<button class="btn ghost" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('details')}</button><button class="btn status-warning" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('recovering')}</button>`;
+      if (state === 'degraded') return `<button class="btn ghost" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('details')}</button><button class="btn status-warning" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('partialError')}</button>`;
+      if (state === 'unavailable') return `<button class="btn ghost" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('details')}</button><button class="btn status-bad" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('connectionError')}</button>`;
+    }
+    if (d.authMode === 'oauth2-pkce') {
+      return `<button class="btn ghost" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('details')}</button><button class="btn" type="button" onclick="event.stopPropagation();window.__mcp.connect('${id}')">${t('connect')}</button>`;
+    }
+    if (d.authMode === 'none') {
+      return `<button class="btn ghost" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('details')}</button><button class="btn" type="button" onclick="event.stopPropagation();window.__mcp.connect('${id}')">${t('connect')}</button>`;
+    }
+    return `<button class="btn ghost" type="button" onclick="event.stopPropagation();window.__mcp.showDetail('${id}')">${t('details')}</button><button class="btn" type="button" onclick="event.stopPropagation();window.__mcp.openConfig('${id}')">${t('configure')}</button>`;
+  }
+
+  async function loadInstalled() {
+    syncMarketNav();
+    main.innerHTML = '<div class="empty">加载中…</div>';
+    const [r, migration] = await Promise.all([call('status', {}), call('migrationPreview', { scanStored: false })]);
+    if (!r.ok) { main.innerHTML = `<div class="empty">${esc(r.message)}</div>`; return; }
+    const items = r.detail?.items ?? [];
+    setTabCount('installed', items.length);
+    const pendingMigration = migration.ok ? migration.detail?.pendingCount || 0 : 0;
+    const migrationHtml = pendingMigration > 0 ? `<div class="migration-banner"><div class="copy"><strong>发现旧企查查 MCP 授权</strong>可安全复制 ${pendingMigration} 组授权到 MCP连接器；不会删除旧插件或原凭据。</div><button class="btn" type="button" onclick="window.__mcp.migrateLegacy()">迁移</button></div>` : '';
+    if (!items.length) { main.innerHTML = `${migrationHtml}<div class="stats"><span class="count">可从旧企查查 OAuth 插件复制已有授权</span><button class="btn ghost" type="button" onclick="window.__mcp.scanLegacy()">检测旧插件</button></div><div class="empty">还没有连接任何 MCP · 到「市场」里连接一个吧</div>`; return; }
+    const filtered = items.filter(matchesSearch);
+    main.innerHTML = `${migrationHtml}<div class="stats"><span class="count">共 <strong>${filtered.length}</strong> 条连接${searchQuery ? ` · 搜索「${esc(searchQuery)}」` : ''} · 停用后工具立即下线，断开会撤销 OAuth 授权</span><button class="btn ghost" type="button" onclick="window.__mcp.scanLegacy()">检测旧插件</button></div><div class="rows">${filtered.map(rowHtml).join('')}</div>`;
+  }
+
+  function rowHtml(r) {
+    const key = esc(r.key);
+    const authMode = r.authMode === 'oauth' ? '<span class="badge auth-oauth">OAuth</span>' : `<span class="badge">${esc(r.authMode || 'manual')}</span>`;
+    const healthLabels = { healthy: '已连接', configured: '已配置', reauth: '需重新授权', recovering: '自动重试中', degraded: '部分异常', unavailable: '连接异常', disabled: '已停用' };
+    const healthClass = r.connectionState === 'healthy' ? 'pass' : ['reauth', 'recovering', 'degraded'].includes(r.connectionState) ? 'partial' : r.connectionState === 'unavailable' ? 'fail' : '';
+    const healthBadge = `<span class="badge ${healthClass}">${esc(healthLabels[r.connectionState] || '已配置')}</span>`;
+    const enabled = r.enabled !== false;
+    return `<div class="row" data-key="${key}">
+      <div class="info">
+        <div class="rname">${esc(r.name)} ${authMode} ${healthBadge}</div>
+        <div class="rmeta">${esc(r.serverName || '')} · ${esc(r.endpoint || r.url || '')}</div>
+      </div>
+      <label class="switch" title="${enabled ? '停用' : '启用'}" aria-label="${enabled ? '停用' : '启用'} ${esc(r.name)}">
+        <input type="checkbox" ${enabled ? 'checked' : ''} onchange="window.__mcp.toggle('${key}', this.checked)">
+        <span class="slider"></span>
+      </label>
+      <button class="btn danger" onclick="window.__mcp.disconnect('${key}')">断开</button>
+    </div>`;
+  }
+
+  function guidanceFor(message) {
+    const text = String(message || '未知错误');
+    const withAdvice = (advice) => `${text.replace(/[。！？.!?\s]+$/, '')}。${advice}`;
+    if (/protocol not allowed|only https/i.test(text)) return withAdvice('公网地址必须使用 HTTPS；HTTP 只允许 localhost/127.0.0.1。');
+    if (/JSON/i.test(text)) return withAdvice('请检查引号、逗号，并确认顶层是 mcpServers 或 connections。');
+    if (/401|403|token|凭据|api.?key/i.test(text)) return withAdvice('请核对鉴权方式、Token/API Key 是否有效以及 Header 名。');
+    if (/timeout|timed out|fetch|连接|network/i.test(text)) return withAdvice('请检查网络、端点是否可达以及 MCP URL 是否完整。');
+    return text;
+  }
+
+  function showModalError(message) {
+    const node = $('#modal-error');
+    if (!node) { showToast(guidanceFor(message), false); return; }
+    node.textContent = guidanceFor(message);
+    node.classList.add('show');
+    node.focus?.();
+  }
+
+  function setModalBusy(busy, busyLabel = '') {
+    const modal = $('#modal');
+    if (!modal) return;
+    modal.setAttribute('aria-busy', busy ? 'true' : 'false');
+    const primary = modal.querySelector('.m-actions .btn:not(.ghost)');
+    if (busy && primary) {
+      primary.dataset.idleLabel = primary.textContent;
+      primary.textContent = busyLabel || '处理中…';
+    } else if (!busy && primary?.dataset.idleLabel) {
+      primary.textContent = primary.dataset.idleLabel;
+      delete primary.dataset.idleLabel;
+    }
+    modal.querySelectorAll('button, input, textarea, select').forEach((element) => { element.disabled = busy; });
+  }
+
+  function addTabs(active) {
+    return `<div class="modal-tabs" role="tablist" aria-label="添加连接方式">
+      <button type="button" class="${active === 'json' ? 'active' : ''}" onclick="window.__mcp.openAdd('json')">导入 JSON</button>
+      <button type="button" class="${active === 'manual' ? 'active' : ''}" onclick="window.__mcp.openAdd('manual')">手动配置</button>
+      <button type="button" class="${active === 'url' ? 'active' : ''}" onclick="window.__mcp.openAdd('url')">市场卡片</button>
+    </div>`;
+  }
+
+  function openCatalogCredentialForm(preset) {
+    const authMode = preset.authMode === 'api-key' ? 'api-key' : 'bearer';
+    const servers = preset.servers || [];
+    const usesStdio = servers.some((server) => server.transport === 'stdio');
+    const homepage = /^https:\/\//i.test(preset.homepage || '') ? preset.homepage : '';
+    const credentialName = preset.credentialName || (authMode === 'bearer' ? 'Bearer Token' : 'API Key');
+    const credentialPlaceholder = preset.credentialPlaceholder || '仅保存在 DSH 本机';
+    const credentialDescription = preset.credentialDescription || '凭据仅保存在 DSH 本机，不会写入市场目录或对话。';
+    const credentialHelpLabel = preset.credentialHelpLabel || `前往 ${preset.vendor || preset.name} 官网获取`;
+    const declaredFields = preset.credentialFields?.length ? preset.credentialFields : [{
+      key: 'credential', label: credentialName, placeholder: credentialPlaceholder,
+      description: credentialDescription, required: true, secret: true,
+    }];
+    const stdioCredentialFields = declaredFields.map((field) => {
+      const id = `cfg-credential-${field.key}`;
+      return `<label for="${esc(id)}">${esc(field.label)}${field.required === false ? '（可选）' : '（必填）'}</label><input id="${esc(id)}" data-credential-key="${esc(field.key)}" type="${field.secret === false ? 'text' : 'password'}" autocomplete="off" placeholder="${esc(field.placeholder || '仅保存在 DSH 本机')}" />${field.description ? `<div class="field-help">${esc(field.description)}</div>` : ''}`;
+    }).join('');
+    const credentialFields = usesStdio
+      ? stdioCredentialFields
+      : authMode === 'bearer'
+        ? `<label for="cfg-token">${esc(credentialName)}（必填）</label><input id="cfg-token" type="password" autocomplete="off" placeholder="${esc(credentialPlaceholder)}" /><div class="field-help">${esc(credentialDescription)}</div>`
+        : `<div class="form-row"><div><label for="cfg-key-header">API Key Header</label><input id="cfg-key-header" value="${esc(preset.apiKeyHeader || 'X-Api-Key')}" /></div><div><label for="cfg-key-value">${esc(credentialName)}（必填）</label><input id="cfg-key-value" type="password" autocomplete="off" placeholder="${esc(credentialPlaceholder)}" /></div></div><div class="field-help">${esc(credentialDescription)}</div>`;
+    const serverPreview = servers.map((server) => {
+      const endpoint = server.transport === 'stdio'
+        ? `stdio · ${server.command || ''} ${(server.args || []).join(' ')}`.trim()
+        : server.url;
+      return `<div>${esc(server.serverName)} · ${esc(endpoint)}</div>`;
+    }).join('');
+    openModal(`配置 ${preset.name}`, `
+      <input id="cfg-connector-id" type="hidden" value="${esc(preset.id)}" />
+      <input id="cfg-auth" type="hidden" value="${esc(authMode)}" />
+      <div class="form-note"><strong>一次配置 ${servers.length} 个 MCP Server</strong>以下 Server 共用同一份 ${esc(credentialName)}；凭据仅保存在本机，不会写入市场目录。</div>
+      <div class="server-preview">${serverPreview}</div>
+      ${credentialFields}
+      ${homepage ? `<div class="field-help"><a href="${esc(homepage)}" target="_blank" rel="noopener noreferrer">${esc(credentialHelpLabel)}</a></div>` : ''}
+      <div class="inline-error" id="modal-error" tabindex="-1"></div>
+      <div class="m-actions"><button class="btn ghost" type="button" onclick="window.__mcp.closeModal()">取消</button><button class="btn" type="button" onclick="window.__mcp.submitConfig()">连接 ${servers.length} 个 Server</button></div>`);
+  }
+
+  function openAddConnection(mode = 'json', preset = {}) {
+    const server = (preset.servers || [{}])[0] || {};
+    if (mode === 'manual' && preset.id && ['bearer', 'api-key'].includes(preset.authMode)) {
+      openCatalogCredentialForm(preset);
+      return;
+    }
+    if (mode === 'json') {
+      openModal('添加 MCP 连接', `${addTabs(mode)}
+        <div class="field-label-row"><label for="import-json">粘贴 MCP JSON</label><button class="text-btn" type="button" onclick="window.__mcp.formatImportJson(false)">格式化 JSON</button></div>
+        <textarea id="import-json" rows="8" spellcheck="false" placeholder="${esc(MCP_JSON_EXAMPLE)}" onpaste="setTimeout(() => window.__mcp.formatImportJson(true), 0)"></textarea>
+        <div class="field-help">支持 <code>mcpServers</code> 的 Streamable HTTP、SSE 与 stdio（command/args/env/cwd），配置和凭据仅保存在 DSH 本机。</div>
+        <div class="inline-error" id="modal-error" tabindex="-1"></div>
+        <div class="m-actions"><button class="btn ghost" type="button" onclick="window.__mcp.closeModal()">取消</button><button class="btn" type="button" onclick="window.__mcp.submitImport()">校验并导入</button></div>`);
+      return;
+    }
+    if (mode === 'url') {
+      openModal('添加 MCP 连接', `${addTabs(mode)}
+        <p class="field-help">粘贴厂商提供的 ConnectorDescriptor JSON 地址。安装成功后会作为卡片显示在本机「市场」。</p>
+        <div class="form-note"><strong>公共市场如何上架</strong>向 <code>dsh-mcp-connector</code> registry 提交无 Token/API Key 的描述 JSON；Schema、URL、MCP 和 OAuth 探针通过后才会分发给所有用户。真正一键 OAuth 需厂商支持 Authorization Code + PKCE、标准元数据和动态客户端注册。</div>
+        <label for="descriptor-url">连接器描述 URL（必填）</label>
+        <input id="descriptor-url" type="url" placeholder="https://example.com/dsh-connector.json" />
+        <div class="inline-error" id="modal-error" tabindex="-1"></div>
+        <div class="m-actions"><button class="btn ghost" type="button" onclick="window.__mcp.closeModal()">取消</button><button class="btn" type="button" onclick="window.__mcp.submitUrl()">验证并安装</button></div>`);
+      return;
+    }
+    const suggestedAuth = preset.authMode === 'bearer' || preset.authMode === 'api-key' ? preset.authMode : 'none';
+    openModal('添加 MCP 连接', `${addTabs(mode)}
+      <p class="field-help">适合私有、内网或暂未上架的 MCP Server。凭据只写入 DSH 本机 storage domain。</p>
+      <div class="form-row"><div><label for="cfg-name">名称（必填）</label><input id="cfg-name" value="${esc(preset.name || '')}" placeholder="连接显示名" /></div>
+      <div><label for="cfg-sname">serverName（工具前缀）</label><input id="cfg-sname" value="${esc(server.serverName || '')}" placeholder="my-server" /></div></div>
+      <label for="cfg-transport">传输方式</label><select id="cfg-transport" onchange="window.__mcp.syncTransportFields()"><option value="streamable-http">Streamable HTTP（兼容 SSE）</option><option value="stdio">stdio（本地进程）</option></select>
+      <div id="cfg-http-fields">
+        <label for="cfg-url">MCP URL（必填）</label><input id="cfg-url" type="url" value="${esc(server.url || '')}" placeholder="https://example.com/mcp" />
+        <label for="cfg-auth">鉴权方式</label><select id="cfg-auth" onchange="window.__mcp.syncAuthFields()"><option value="none" ${suggestedAuth === 'none' ? 'selected' : ''}>无鉴权</option><option value="bearer" ${suggestedAuth === 'bearer' ? 'selected' : ''}>Bearer Token</option><option value="api-key" ${suggestedAuth === 'api-key' ? 'selected' : ''}>API Key</option></select>
+        <div id="cfg-bearer"><label for="cfg-token">Bearer Token（必填）</label><input id="cfg-token" type="password" autocomplete="off" placeholder="仅保存在本机" /></div>
+        <div id="cfg-apikey" class="form-row"><div><label for="cfg-key-header">API Key Header</label><input id="cfg-key-header" value="${esc(preset.authMode === 'api-key' ? 'X-Api-Key' : '')}" placeholder="X-Api-Key" /></div><div><label for="cfg-key-value">API Key（必填）</label><input id="cfg-key-value" type="password" autocomplete="off" placeholder="仅保存在本机" /></div></div>
+        <label for="cfg-headers">额外 Headers（可选 JSON）</label><textarea id="cfg-headers" rows="2" spellcheck="false" placeholder='{"X-Tenant":"team-a"}'></textarea>
+      </div>
+      <div id="cfg-stdio-fields" hidden>
+        <label for="cfg-command">启动命令（必填）</label><input id="cfg-command" placeholder="npx" autocomplete="off" />
+        <label for="cfg-args">参数（JSON 数组）</label><textarea id="cfg-args" rows="2" spellcheck="false" placeholder='["-y","@modelcontextprotocol/server-filesystem","/path"]'></textarea>
+        <label for="cfg-env">环境变量（JSON 对象）</label><textarea id="cfg-env" rows="2" spellcheck="false" placeholder='{"SERVICE_TOKEN":"仅保存在本机"}'></textarea>
+        <label for="cfg-cwd">工作目录（可选）</label><input id="cfg-cwd" placeholder="默认使用 DSH 当前目录" autocomplete="off" />
+        <div class="field-help">stdio 会在本机启动进程；请只使用可信命令和软件包。环境变量不会写入市场目录。</div>
+      </div>
+      <div class="inline-error" id="modal-error" tabindex="-1"></div>
+      <div class="m-actions"><button class="btn ghost" type="button" onclick="window.__mcp.closeModal()">取消</button><button class="btn" type="button" onclick="window.__mcp.submitConfig()">连接</button></div>`);
+    window.__mcp.syncTransportFields();
+  }
+
+  function renderResolvedPrompt(prompt, values) {
+    const specs = Object.fromEntries(promptVariables(prompt).map((variable) => [variable.name, variable]));
+    const missing = [];
+    const text = String(prompt.text || prompt.title || '').replace(/\{\{\s*([A-Za-z][A-Za-z0-9_-]*)\s*\}\}|\{\s*([A-Za-z][A-Za-z0-9_-]*)\s*\}/g, (_token, a, b) => {
+      const name = a || b;
+      const spec = specs[name] || { name, label: name, required: true };
+      const value = String(values[name] ?? spec.default ?? '').trim();
+      if (!value && spec.required !== false) missing.push(spec.label || name);
+      return value;
+    });
+    if (missing.length) throw new Error(`请填写：${[...new Set(missing)].join('、')}`);
+    return text.replace(/\s+([，。！？；：])/g, '$1').replace(/[ \t]{2,}/g, ' ').trim();
+  }
+
+  function openPromptForm(prompt) {
+    const variables = promptVariables(prompt);
+    if (variables.length === 0) { window.__mcp.sendPrompt(prompt.text || prompt.title || ''); return; }
+    if (!promptNeedsInput(prompt)) {
+      window.__mcp.sendPrompt(renderResolvedPrompt(prompt, {}));
+      return;
+    }
+    pendingPrompt = prompt;
+    const fields = variables.map((variable) => `<label for="prompt-${esc(variable.name)}">${esc(variable.label)}${variable.required === false ? '（可选）' : '（必填）'}</label><input id="prompt-${esc(variable.name)}" data-prompt-variable="${esc(variable.name)}" value="${esc(variable.default || '')}" placeholder="${esc(variable.placeholder || '')}" autocomplete="off" />${variable.description ? `<div class="field-help">${esc(variable.description)}</div>` : ''}`).join('');
+    openModal(prompt.title || '填写查询参数', `<p class="field-help">发送前补全参数，内容只用于本次新会话，不会写回连接器目录。</p>${fields}<div class="inline-error" id="modal-error" tabindex="-1"></div><div class="m-actions"><button class="btn ghost" type="button" onclick="window.__mcp.closeModal()">取消</button><button class="btn" type="button" onclick="window.__mcp.submitPromptVariables()">带入新会话</button></div>`);
+  }
+
+  window.__mcp = {
+    async connect(connectorId) {
+      const timeoutMs = marketItems[connectorId]?.authMode === 'oauth2-pkce' ? 310_000 : undefined;
+      const r = await call('connect', { connectorId }, { timeoutMs });
+      showToast(r.message, r.ok);
+      if (r.ok) {
+        await call('healthCheck', { connectorId });
+        await refresh();
+      }
+    },
+    toggle(key, enabled) {
+      call('setEnabled', { key, enabled }).then((r) => showToast(r.message, r.ok));
+    },
+    async disconnect(key) {
+      if (!confirm('确认断开该连接？OAuth 授权会被撤销。')) return;
+      const r = await call('disconnect', { key });
+      showToast(r.message, r.ok);
+      await refresh();
+    },
+    openAdd(mode) { openAddConnection(mode); },
+    openConfig(connectorId) { openAddConnection('manual', marketItems[connectorId] || {}); },
+    formatImportJson(silent = false) {
+      const input = $('#import-json');
+      const value = input?.value.trim();
+      if (!input || !value) return;
+      try {
+        input.value = JSON.stringify(JSON.parse(value), null, 2);
+        $('#modal-error')?.classList.remove('show');
+      } catch (error) {
+        if (!silent) showModalError(`JSON 格式化失败: ${error.message}`);
+      }
+    },
+    syncAuthFields() {
+      const mode = $('#cfg-auth')?.value || 'none';
+      if ($('#cfg-bearer')) $('#cfg-bearer').hidden = mode !== 'bearer';
+      if ($('#cfg-apikey')) $('#cfg-apikey').hidden = mode !== 'api-key';
+    },
+    syncTransportFields() {
+      const stdio = $('#cfg-transport')?.value === 'stdio';
+      if ($('#cfg-http-fields')) $('#cfg-http-fields').hidden = stdio;
+      if ($('#cfg-stdio-fields')) $('#cfg-stdio-fields').hidden = !stdio;
+      window.__mcp.syncAuthFields();
+    },
+    closeModal() { closeModal(); },
+    async submitConfig() {
+      const connectorId = $('#cfg-connector-id')?.value.trim();
+      const authMode = $('#cfg-auth').value;
+      if (connectorId) {
+        const credentialValues = {};
+        document.querySelectorAll('[data-credential-key]').forEach((input) => {
+          credentialValues[input.dataset.credentialKey] = input.value;
+        });
+        setModalBusy(true, '正在验证凭据与连接…');
+        const r = await call('configure', {
+          connectorId,
+          authMode,
+          credentialValues,
+          bearerToken: $('#cfg-token')?.value || undefined,
+          apiKeyHeader: $('#cfg-key-header')?.value || undefined,
+          apiKeyValue: $('#cfg-key-value')?.value || undefined,
+        });
+        setModalBusy(false);
+        if (!r.ok) { showModalError(r.message); return; }
+        const configuredFromDetail = detailConnector?.id === connectorId && $('#detail-overlay').classList.contains('active');
+        closeModal();
+        if (configuredFromDetail) closeDetail();
+        showToast(r.message, true); await refresh();
+        return;
+      }
+      const name = $('#cfg-name').value.trim();
+      const serverName = $('#cfg-sname').value.trim();
+      const transport = $('#cfg-transport').value;
+      const url = $('#cfg-url')?.value.trim() || '';
+      const command = $('#cfg-command')?.value.trim() || '';
+      if (!name || (transport === 'stdio' ? !command : !url)) { showModalError(transport === 'stdio' ? '名称与启动命令必填' : '名称与 URL 必填'); return; }
+      let args;
+      let envJson;
+      if (transport === 'stdio') {
+        try {
+          args = JSON.parse($('#cfg-args').value || '[]');
+          envJson = JSON.parse($('#cfg-env').value || '{}');
+          if (!Array.isArray(args)) throw new Error('参数必须是 JSON 数组');
+          if (!envJson || Array.isArray(envJson) || typeof envJson !== 'object') throw new Error('环境变量必须是 JSON 对象');
+        } catch (error) { showModalError(`stdio 配置错误: ${error.message}`); return; }
+      }
+      let headersJson;
+      try { headersJson = JSON.parse($('#cfg-headers')?.value || '{}'); }
+      catch { showModalError('额外 Headers 不是合法 JSON'); return; }
+      setModalBusy(true);
+      const r = await call('configure', {
+        name, url: url || undefined, serverName, headersJson,
+        transport, command: command || undefined, args, envJson, cwd: $('#cfg-cwd')?.value.trim() || undefined,
+        authMode: transport === 'stdio' ? 'none' : authMode,
+        bearerToken: $('#cfg-token')?.value || undefined,
+        apiKeyHeader: $('#cfg-key-header')?.value || undefined,
+        apiKeyValue: $('#cfg-key-value')?.value || undefined,
+      });
+      setModalBusy(false);
+      if (!r.ok) { showModalError(r.message); return; }
+      closeModal(); showToast(r.message, true); await refresh();
+    },
+    async submitImport() {
+      let json = $('#import-json').value.trim();
+      if (!json) { showModalError('请粘贴 MCP JSON'); return; }
+      try {
+        json = JSON.stringify(JSON.parse(json), null, 2);
+        $('#import-json').value = json;
+      } catch (error) {
+        showModalError(`MCP JSON 不合法: ${error.message}`);
+        return;
+      }
+      setModalBusy(true);
+      const r = await call('importJson', { json });
+      setModalBusy(false);
+      if (!r.ok) { showModalError(r.message); return; }
+      closeModal(); showToast(r.message, true); view = 'installed'; syncTabs(); await refresh();
+    },
+    async submitUrl() {
+      const url = $('#descriptor-url').value.trim();
+      if (!url) { showModalError('连接器描述 URL 必填'); return; }
+      setModalBusy(true);
+      const r = await call('installFromUrl', { url });
+      setModalBusy(false);
+      if (!r.ok) { showModalError(r.message); return; }
+      closeModal(); showToast(r.message, true); await refresh();
+    },
+    async migrateLegacy() {
+      if (!confirm('确认把旧企查查 OAuth 授权复制到 MCP连接器？原插件与原凭据会保留；验证新连接后再手动停用旧插件。')) return;
+      const r = await call('migrateLegacy', { candidateIds: [] });
+      showToast(r.message, r.ok);
+      await loadInstalled();
+    },
+    async scanLegacy() {
+      const preview = await call('migrationPreview', { scanStored: true });
+      if (!preview.ok || !preview.detail?.pendingCount) {
+        showToast(preview.message, preview.ok);
+        return;
+      }
+      const ids = (preview.detail.items || []).filter((item) => item.migratable && !item.alreadyMigrated).map((item) => item.id);
+      if (!confirm(`检测到 ${ids.length} 组可迁移授权。确认复制到 MCP连接器？原插件与原凭据会保留。`)) return;
+      const result = await call('migrateLegacy', { candidateIds: ids });
+      showToast(result.message, result.ok);
+      await loadInstalled();
+    },
+    async showDetail(connectorId) {
+      const d = marketItems[connectorId];
+      if (!d) return;
+      detailConnector = d;
+      detailFailureState = d.connectionState || '';
+      detailNeedsReconfigure = ['reauth', 'recovering', 'unavailable'].includes(detailFailureState);
+      const loadId = ++detailLoadId;
+      $('#detail-icon').innerHTML = isImageIcon(d.icon)
+        ? `<img src="${esc(d.icon)}" alt="" onerror="this.parentElement.innerHTML='🔌';" />`
+        : `<span style="font-size:24px;">${esc(d.icon || '')}</span>`;
+      $('#detail-name').textContent = d.name || '';
+      const initialStateLabel = d.connectionLabel || (d.connected?.length ? '已配置' : '未连接');
+      $('#detail-vendor').textContent = d.vendor ? `${d.vendor} · ${initialStateLabel} ${d.connected?.length || 0} 个服务` : `${initialStateLabel} ${d.connected?.length || 0} 个服务`;
+      $('#detail-desc').textContent = d.description || d.summary || '';
+      detailPrompts = (d.prompts || []).filter((prompt) => prompt?.text || prompt?.title);
+      promptPage = 0;
+      renderPromptPage();
+      detailToolServers = [];
+      toolRenderLimit = 50;
+      $('#tools-search').value = '';
+      $('#tools-disclosure').open = false;
+      $('#tools-summary').textContent = '加载中…';
+      $('#detail-tools').innerHTML = '<div class="tools-loading">正在读取可用工具及描述…</div>';
+      setDetailOpen(true);
+      $('#detail-disconnect-btn').style.display = d.connected?.length > 0 ? 'block' : 'none';
+      const needsCredential = ['bearer', 'api-key'].includes(d.authMode);
+      $('#detail-try-btn').textContent = detailNeedsReconfigure
+        ? d.authMode === 'oauth2-pkce' && detailFailureState === 'reauth' ? '🔐 重新授权' : needsCredential && detailFailureState === 'reauth' ? t('reconfigureCredential') : '🔄 重新检查'
+        : d.connected?.length > 0 ? t('try') : needsCredential ? t('configureConnect') : t('connectTry');
+      if (!d.connected?.length && !d.toolsSnapshot?.length) {
+        $('#tools-summary').textContent = '连接后查看工具';
+        $('#detail-tools').innerHTML = '<div class="tools-empty">连接后可读取服务端工具清单</div>';
+        renderPromptPage();
+        return;
+      }
+      const toolsResult = await call('toolsList', { connectorId });
+      if (loadId !== detailLoadId || !$('#detail-overlay').classList.contains('active')) return;
+      if (!toolsResult.ok) {
+        detailFailureState = toolsResult.detail?.connectionState || detailFailureState || 'unavailable';
+        detailNeedsReconfigure = true;
+        $('#tools-summary').textContent = '工具加载失败';
+        $('#detail-tools').innerHTML = `<div class="tools-error">${esc(toolsResult.message)}</div>`;
+        const failureLabel = detailFailureState === 'reauth' ? (d.authMode === 'oauth2-pkce' ? '授权已失效' : '凭据已失效') : '当前连接异常';
+        $('#detail-vendor').textContent = d.vendor ? `${d.vendor} · ${failureLabel}` : failureLabel;
+        $('#detail-try-btn').textContent = d.authMode === 'oauth2-pkce' && detailFailureState === 'reauth'
+          ? '🔐 重新授权'
+          : needsCredential && detailFailureState === 'reauth' ? t('reconfigureCredential') : '🔄 重新检查';
+        renderPromptPage();
+        return;
+      }
+      detailFailureState = toolsResult.detail?.connectionState || 'healthy';
+      detailNeedsReconfigure = false;
+      $('#detail-vendor').textContent = d.vendor ? `${d.vendor} · ${detailFailureState === 'degraded' ? '部分服务可用' : '已连接'} ${d.connected?.length || 0} 个服务` : `${detailFailureState === 'degraded' ? '部分服务可用' : '已连接'} ${d.connected?.length || 0} 个服务`;
+      $('#detail-try-btn').textContent = t('try');
+      renderPromptPage();
+      detailToolServers = toolsResult.detail?.servers || [];
+      updateToolsSummary();
+      renderTools();
+    },
+    submitPromptVariables() {
+      if (!pendingPrompt) return;
+      const values = {};
+      $('#modal').querySelectorAll('[data-prompt-variable]').forEach((input) => { values[input.dataset.promptVariable] = input.value; });
+      let prompt;
+      try { prompt = renderResolvedPrompt(pendingPrompt, values); }
+      catch (error) { showModalError(error.message); return; }
+      pendingPrompt = null;
+      closeModal();
+      window.__mcp.sendPrompt(prompt);
+    },
+    sendPrompt(promptText) {
+      const prompt = String(promptText || '').trim();
+      if (!prompt) {
+        showToast('Prompt 不能为空', false);
+        return;
+      }
+      if (promptRequestId !== null) return;
+      if (window.parent === window) {
+        showToast('请在 DSH Desktop 中使用「发送到新会话」', false);
+        return;
+      }
+      const requestId = `prompt-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      promptRequestId = requestId;
+      setPromptLaunchPending(true);
+      showToast('正在创建新会话…', true);
+      window.parent.postMessage({
+        type: PROMPT_REQUEST_TYPE,
+        requestId,
+        prompt
+      }, window.location.origin);
+      promptRequestTimer = setTimeout(() => {
+        finishPromptLaunch(requestId, false, '打开新会话超时，请重试');
+      }, 10000);
+    },
+    async disconnectCurrent() {
+      const name = detailConnector?.name || $('#detail-name').textContent;
+      if (!confirm(`确认断开「${name}」的连接？OAuth 授权会被撤销。`)) return;
+      // Find connection keys for this connector
+      const r = await call('status', {});
+      if (r.ok) {
+        const items = r.detail?.items ?? [];
+        for (const item of items) {
+          if (item.connectorId === detailConnector?.id) {
+            const dr = await call('disconnect', { key: item.key });
+            showToast(dr.message, dr.ok);
+          }
+        }
+      }
+      closeDetail();
+      await refresh();
+    },
+  };
+
+  $('#detail-close').addEventListener('click', closeDetail);
+  $('#detail-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'detail-overlay') closeDetail();
+  });
+  $('#prompt-next').addEventListener('click', () => {
+    promptPage += 1;
+    renderPromptPage();
+  });
+  $('#detail-prompts').addEventListener('click', (e) => {
+    const button = e.target.closest('button[data-prompt-index]');
+    if (!button) return;
+    const prompt = detailPrompts[Number(button.dataset.promptIndex)];
+    if (prompt && detailConnector?.connected?.length && !detailNeedsReconfigure) openPromptForm(prompt);
+  });
+  $('#tools-search').addEventListener('input', () => { toolRenderLimit = 50; renderTools(); });
+  $('#detail-tools').addEventListener('click', (event) => {
+    if (!event.target.closest('#tools-more')) return;
+    toolRenderLimit += 50;
+    renderTools();
+  });
+  $('#detail-try-btn').addEventListener('click', async () => {
+    if (detailNeedsReconfigure) {
+      if (detailFailureState === 'reauth' && ['bearer', 'api-key'].includes(detailConnector?.authMode)) {
+        openAddConnection('manual', detailConnector);
+        return;
+      }
+      if (detailFailureState === 'reauth' && detailConnector?.authMode === 'oauth2-pkce') {
+        const id = detailConnector.id;
+        const r = await call('connect', { connectorId: id }, { timeoutMs: 310_000 });
+        showToast(r.message, r.ok);
+        if (r.ok) {
+          await call('healthCheck', { connectorId: id });
+          closeDetail();
+          await refresh();
+        }
+        return;
+      }
+      const id = detailConnector?.id;
+      if (id) await window.__mcp.showDetail(id);
+      return;
+    }
+    if (!detailConnector?.connected?.length) {
+      const id = detailConnector?.id;
+      if (!id) return;
+      if (['bearer', 'api-key'].includes(detailConnector.authMode)) {
+        openAddConnection('manual', detailConnector);
+        return;
+      }
+      const r = await call('connect', { connectorId: id });
+      showToast(r.message, r.ok);
+      if (r.ok) { closeDetail(); await refresh(); }
+      return;
+    }
+    const prompt = detailPrompts[promptPage * PROMPT_PAGE_SIZE];
+    if (prompt) {
+      openPromptForm(prompt);
+    } else {
+      showToast('暂无预设 Prompt', false);
+    }
+  });
+  $('#detail-disconnect-btn').addEventListener('click', () => {
+    window.__mcp.disconnectCurrent();
+  });
+  document.addEventListener('keydown', (e) => {
+    if ($('#modalMask').classList.contains('show')) {
+      if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
+      if (e.key === 'Tab') {
+        const focusable = [...$('#modal').querySelectorAll('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled])')];
+        if (!focusable.length) return;
+        const first = focusable[0]; const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+      return;
+    }
+    if (e.key === 'Escape' && $('#detail-overlay').classList.contains('active')) closeDetail();
+  });
+  window.addEventListener('pagehide', () => notifyDetailState(false));
+
+  function refresh() { return view === 'market' ? loadMarket() : loadInstalled(); }
+  function syncTabs() {
+    document.querySelectorAll('#tabs button').forEach((button) => button.classList.toggle('active', button.dataset.view === view));
+    syncMarketNav();
+  }
+
+  $('#add-connection').addEventListener('click', () => openAddConnection('json'));
+  $('#market-nav').addEventListener('click', (event) => {
+    const categoryFilter = event.target.closest('[data-category-filter]');
+    if (categoryFilter) {
+      marketCategory = categoryFilter.dataset.categoryFilter || '';
+      loadMarket({ checkHealth: false });
+    }
+  });
+  main.addEventListener('click', (event) => {
+    const sectionToggle = event.target.closest('[data-section-toggle]');
+    if (sectionToggle) {
+      const section = sectionToggle.dataset.sectionToggle;
+      if (expandedMarketSections.has(section)) expandedMarketSections.delete(section);
+      else expandedMarketSections.add(section);
+      loadMarket({ checkHealth: false, preserveScroll: true });
+    }
+  });
+  $('#refresh').addEventListener('click', async () => {
+    const r = await call('refreshCatalog', {});
+    showToast(r.message, r.ok);
+    if (r.ok) {
+      const health = await call('healthCheck', {});
+      showToast(`${r.message}；${health.message}`, health.ok);
+    }
+    await refresh();
+  });
+
+  $('#tabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-view]');
+    if (!btn) return;
+    view = btn.dataset.view;
+    syncTabs();
+    refresh();
+  });
+
+  searchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim();
+    expandedMarketSections.clear();
+    refresh();
+  });
+
+  refresh();
+})();
+</script>
+</body>
+</html>

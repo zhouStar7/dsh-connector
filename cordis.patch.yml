@@ -1,0 +1,15 @@
+# dsh-connector 插件（DSH Bundle patch）
+# 作为 bundle 被合入 profile 时，自动插入本插件行。
+# 配置页注册在「设置」对话框的 settings.section 分区（不再有侧栏启动器）。
+# 插件负责连接器目录、三通道连接、凭证存储与 mcp-client 条目动态配置。
+# 注意：本插件沿用上游 dsh-mcp-connector 的存储域与受管条目前缀，
+#       安装前请先移除上游插件，避免双实例抢占同一存储域。
+- insert:
+    - id: dsh-connector
+      name: 'dsh-connector'
+      config:
+        catalogUrl: 'https://cdn.jsdelivr.net/gh/duhu2000/dsh-mcp-connector-registry@main/catalog.json'
+        persistSecrets: true
+        entryPrefix: 'mcp'
+        refreshSkewMs: 300000
+        openBrowser: true

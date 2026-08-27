@@ -1,0 +1,114 @@
+{
+  "name": "dsh-connector",
+  "version": "0.3.0",
+  "description": "MCP 连接器（设置页版）：基于 dsh-mcp-connector 的完整连接器/市场能力，配置页移入 DSH 设置对话框",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "dsh-connector-probe": "scripts/probe-connector.mjs"
+  },
+  "files": [
+    "lib",
+    "ui",
+    "catalog",
+    "registry",
+    "docs/DESKTOP-E2E.md",
+    "docs/MARKET-REGISTRATION.md",
+    "docs/STDIO-SUPPORT.md",
+    "docs/USER-GUIDE.md",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "install.sh",
+    "scripts/probe-connector.mjs",
+    "scripts/build-registry.mjs",
+    "scripts/ui-harness.mjs"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "lint": "node --check lib/index.js && node --check lib/web.js && node --check lib/client.js && node --check lib/version-status.js && node --check lib/schema.js && node --check lib/catalog.js && node --check lib/prompts.js && node --check lib/probe.js && node --check lib/mcp-validation.js && node --check lib/mcp-http.js && node --check lib/migration.js && node --check lib/stores.js && node --check lib/oauth.js && node --check lib/grant-lifecycle.js && node --check lib/callback-server.js && node --check lib/mcp-provision.js && node --check lib/util.js && node --check lib/constants.js && node --check lib/tools.js && node --check lib/connectors/oauth-connector.js && node --check lib/connectors/manual-connector.js && node --check lib/connectors/json-connector.js && node --check scripts/probe-connector.mjs && node --check scripts/build-registry.mjs && node --check scripts/ui-harness.mjs",
+    "registry:build": "node scripts/build-registry.mjs",
+    "registry:validate": "node scripts/probe-connector.mjs catalog/catalog.json --validate-only",
+    "dev:ui": "node scripts/ui-harness.mjs"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "cordis",
+    "mcp",
+    "mcp-client",
+    "mcp-server",
+    "mcp-connector",
+    "mcp-marketplace",
+    "connector",
+    "connection-manager",
+    "marketplace",
+    "plugin",
+    "oauth",
+    "api-key",
+    "json-import",
+    "settings",
+    "tools",
+    "prompts",
+    "MCP连接器",
+    "连接器",
+    "连接管理",
+    "插件",
+    "设置页"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhouStar7/dsh-connector.git"
+  },
+  "homepage": "https://github.com/zhouStar7/dsh-connector#readme",
+  "bugs": {
+    "url": "https://github.com/zhouStar7/dsh-connector/issues"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-client-runtime": "*",
+    "@deepseek-ai/dsh-client-ui-conversation": "*",
+    "@deepseek-ai/dsh-client-ui-layout": "*",
+    "@deepseek-ai/dsh-mcp-client": "^0.1.1-rc.2",
+    "@deepseek-ai/dsh-storage-domain": "*",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/cordis": "^4.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zod": "^4.4.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-storage": "^0.1.0-rc.7",
+    "@deepseek-ai/dsh-storage-domain": "^0.1.0-rc.7",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "zod": "^4.4.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
