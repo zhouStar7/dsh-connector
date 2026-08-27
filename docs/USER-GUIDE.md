@@ -1,19 +1,23 @@
 # MCP连接器用户手册
 
-本手册面向安装和使用 `dsh-mcp-connector` 的 DeepSeek Harness（DSH）用户。服务商或 MCP 原作者如需提交市场卡片，请改看独立 Registry 的[第三方连接器上架指南](https://github.com/duhu2000/dsh-mcp-connector-registry/blob/main/docs/ONBOARDING.md)。
+> **dsh-connector（设置页版）说明**：本 fork 的配置页不在侧栏，而是位于
+> **设置对话框 → 左栏「MCP 连接器」分区**。其余功能与界面同上游 `dsh-mcp-connector`，
+> 本手册中所有「点击左侧 🧩 MCP连接器」的步骤请替换为「打开设置 → 选择 MCP 连接器」。
+
+本手册面向安装和使用 `dsh-connector`（上游为 `dsh-mcp-connector`）的 DeepSeek Harness（DSH）用户。服务商或 MCP 原作者如需提交市场卡片，请改看独立 Registry 的[第三方连接器上架指南](https://github.com/duhu2000/dsh-mcp-connector-registry/blob/main/docs/ONBOARDING.md)。
 
 ## 1. 安装、升级与重启
 
 要求：DSH Desktop 或 `web` profile，Node.js 20 或更高版本。
 
 ```bash
-dsh plugin --profile web add dsh-mcp-connector
+dsh plugin --profile web add github:zhouStar7/dsh-connector
 ```
 
 也可以运行一键安装脚本：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/duhu2000/dsh-mcp-connector/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/zhouStar7/dsh-connector/main/install.sh)
 ```
 
 重复执行同一安装命令即可升级。安装或升级后必须让 DSH **完全退出并重新启动**，仅刷新浏览器页面不足以替换已经加载的插件代码。

@@ -14,7 +14,7 @@
 
 ### 1.1 现状缺口
 
-当前 `dsh-mcp-connector` 的传输方式（`transport`）仅支持：
+当前 `dsh-connector`（与上游一致）的传输方式（`transport`）仅支持：
 
 - `streamable-http`
 - `sse`
