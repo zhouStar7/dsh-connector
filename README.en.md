@@ -2,6 +2,7 @@
 
 > A full port of upstream [duhu2000/dsh-mcp-connector](https://github.com/duhu2000/dsh-mcp-connector)
 > (initiated & maintained by the Qichacha/QCC team, MIT licensed).
+> Currently synced to upstream `v0.2.32`.
 > **Feature set is identical** — the only change: the configuration page moved from a sidebar
 > launcher + centered modal into the **DSH Settings dialog**.
 

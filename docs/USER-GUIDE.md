@@ -4,7 +4,7 @@
 > **设置对话框 → 左栏「MCP 连接器」分区**。其余功能与界面同上游 `dsh-mcp-connector`，
 > 本手册中所有「点击左侧 🧩 MCP连接器」的步骤请替换为「打开设置 → 选择 MCP 连接器」。
 
-本手册面向安装和使用 `dsh-connector`（上游为 `dsh-mcp-connector`）的 DeepSeek Harness（DSH）用户。服务商或 MCP 原作者如需提交市场卡片，请改看独立 Registry 的[第三方连接器上架指南](https://github.com/duhu2000/dsh-mcp-connector-registry/blob/main/docs/ONBOARDING.md)。
+本手册面向安装和使用 `dsh-mcp-connector` 的 DeepSeek Harness（DSH）用户。服务商或 MCP 原作者如需提交市场卡片，请改看独立 Registry 的[第三方连接器上架指南](https://github.com/duhu2000/dsh-mcp-connector-registry/blob/main/docs/ONBOARDING.md)。
 
 ## 1. 安装、升级与重启
 
@@ -46,7 +46,7 @@ dsh web
 - **已安装**：查看已经保存到本机的连接，页签徽标显示连接数。
 - **搜索**：按名称、服务商、简介和标签查找。
 - **添加连接**：导入 JSON、手动配置 HTTP/stdio，或从市场描述 URL 安装。
-- **版本与更新提示**：标题旁显示当前插件版本。检测到 npm 有新版本时，点击更新提示前往 DSH 插件市场执行安全升级；升级后按页面提示完全重启 DSH。
+- **版本与更新提示**：标题旁显示当前插件版本，版本检查不依赖安装所用的插件市场。检测到 npm 有新版本且当前宿主存在兼容 Update Provider 时，可在当前页面一键更新并查看进度、失败原因和可用回滚。DSH Market API v1 是当前首个 Provider；无可用 Provider 时显示“查看更新方式”，宿主没有插件市场分区时会打开 npm 安装说明。
 - **刷新连接器目录**：重新拉取 Registry 卡片，并更新连接健康状态；该操作不会升级 MCP连接器插件本身。
 
 ## 3. 浏览市场与分类
@@ -79,7 +79,7 @@ stdio 市场卡片也可能显示一个或多个凭据字段，例如 API Token�
 
 OAuth 一键连接要求服务商支持标准 OAuth 2.1/PKCE 和公开元数据发现。动态客户端注册既支持无需客户端密钥的 `none`，也支持服务商签发密钥的 `client_secret_post` 与 `client_secret_basic`。客户端密钥仅与 OAuth Grant 一同保存在 DSH 本机，用于换取、刷新和撤销 Token；插件不会要求用户把 OAuth Token 或客户端密钥复制到聊天中。
 
-当市场描述声明 `grantSharing: "issuer"` 时，同一账号下相同 issuer、scope 和客户端鉴权方式的卡片共享一组 Grant。首次授权仍只启用用户点击的卡片；之后连接同组卡片会直接复用现有授权，不再重复打开 OAuth 页面。网络、OAuth 元数据发现或服务端 5xx 等暂时故障只进入“自动重试中”，明确收到 Refresh Token/客户端失效错误时才进入“需重新授权”。
+当市场描述声明 `grantSharing: "issuer"` 时，同一账号下相同 issuer、scope 和客户端鉴权方式的卡片共享一组 Grant。首次授权仍只启用用户点击的卡片；之后连接同组卡片会直接复用现有授权，不再重复打开 OAuth 页面。升级时会验证并自动归并旧版本留下的同 issuer 多份 Grant；Desktop 与 `dsh web` 并发时，插件使用跨进程锁串行轮换，并从每 Grant 独立原子日志读取最新 Token，避免 DSH 整文件 storage 的旧进程快照覆盖新凭据。网络、OAuth 元数据发现或服务端 5xx 等暂时故障只进入“自动重试中”；确认 journal 中也没有更新 Token，且明确收到 Refresh Token/客户端失效错误时，才进入“需重新授权”。
 
 ## 5. 查看详情、Prompt 与工具
 

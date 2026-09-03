@@ -2,6 +2,7 @@
 
 > 基于上游 [duhu2000/dsh-mcp-connector](https://github.com/duhu2000/dsh-mcp-connector)（企查查 QCC 团队发起并维护，MIT 协议）的完整移植。
 > **功能完全一致**，唯一差别：**配置页从侧栏启动按钮 + 居中弹框，移入 DSH「设置」对话框**。
+> 当前同步至上游 `v0.2.32`。
 
 在 DeepSeek Harness Desktop 中浏览和安装不同厂商的 MCP 连接器、连接 MCP Server，
 通过 OAuth 2.0 PKCE / API Key / JSON 导入接入服务，发现工具与 Prompt，扩展 AI 技能，
@@ -28,6 +29,7 @@
 - 三种接入：OAuth 2.0 PKCE（动态注册兼容公共客户端与机密客户端）、自定义 HTTP/stdio、JSON 导入；
 - 连接器详情：精选 Prompt 一键带入新会话；工具按 Server 分组展示；
 - 生命周期管理：连接持久化、重启恢复、启停、断开、OAuth 自动刷新/退避恢复与撤销；
+- 跨进程 Token 轮换保护：OAuth grant 同步写入本机受限权限 journal，多 Host 并发刷新不再互相覆盖（同步自上游 0.2.32）；
 - 目录运营：内置目录 + 远程 registry + 本地上下架覆盖（`published` / `featured`）；
 - 平滑迁移：显式扫描复制两个旧企查查 OAuth 插件授权，旧插件冲突时阻断重复连接；
 - 对话工具：`mcp_connector_catalog`、`connect`、`configure`、`import_json`、`install_from_url`、

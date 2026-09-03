@@ -1,0 +1,13 @@
+feat: sync upstream dsh-mcp-connector v0.2.32 (settings-page fork v0.4.0)
+
+Inherited from upstream 0.2.25..0.2.32:
+- Cross-process OAuth token rotation protection: new lib/grant-journal.js
+  writes grants to a 0600 local journal; refresh takes a lock and adopts a
+  newer persisted token so concurrent DSH hosts stop overwriting rotations.
+- Config SPA: adaptive two-column grid, dismissible community CTA (links
+  repointed to this fork).
+- New CONTRIBUTING.md, docs/FIRST-CONTRIBUTION.md, docs/PLUGIN-UPDATE.md,
+  docs/screenshots assets, screenshots.json.
+
+Fork differences unchanged: config page stays a DSH settings.section,
+plugin id dsh-connector, storage domain shared with upstream.
